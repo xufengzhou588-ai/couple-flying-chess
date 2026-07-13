@@ -1,0 +1,15 @@
+node_modules
+dist
+dist-ssr
+.netlify
+.git
+.agents
+.codex
+.bolt
+.trae
+logs
+*.log
+*.local
+.env
+.vscode
+.idea
