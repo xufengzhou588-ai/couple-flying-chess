@@ -24,18 +24,32 @@ function getSpiralPoint(step: number) {
   };
 }
 
+function tileClassForType(type: TileType, step: number) {
+  if (type === 'lucky') {
+    return 'border-rose-100/84 bg-rose-300/82 shadow-[0_0_14px_rgba(251,113,133,0.54)]';
+  }
+
+  if (type === 'trap') {
+    return 'border-amber-100/84 bg-amber-200/84 shadow-[0_0_14px_rgba(251,191,36,0.42)]';
+  }
+
+  return step % 2 === 0
+    ? 'border-amber-100/60 bg-[#e9bd72]/78'
+    : 'border-rose-100/42 bg-[#791b39]/78';
+}
+
 function markerForType(type: TileType) {
   if (type === 'lucky') {
     return {
-      className: 'text-rose-100/74 drop-shadow-[0_0_6px_rgba(251,113,133,0.72)]',
-      icon: <Heart size={10} fill="currentColor" />
+      className: 'text-white drop-shadow-[0_0_8px_rgba(251,113,133,0.92)]',
+      icon: <Heart size={12} fill="currentColor" />
     };
   }
 
   if (type === 'trap') {
     return {
-      className: 'text-amber-100/66 drop-shadow-[0_0_6px_rgba(251,191,36,0.56)]',
-      icon: <Flame size={10} />
+      className: 'text-[#3a1305] drop-shadow-[0_0_7px_rgba(251,191,36,0.72)]',
+      icon: <Flame size={12} />
     };
   }
 
@@ -50,15 +64,36 @@ export function GameBoard({
   reaction
 }: GameBoardProps) {
   return (
-    <div className="relative aspect-square w-full max-w-[420px]">
-      <div className="absolute inset-0 rounded-[34px] border border-amber-100/22 bg-[#160b12] shadow-[0_34px_96px_rgba(0,0,0,0.58)]">
+    <div
+      className="relative aspect-square shrink-0"
+      style={{ width: 'min(100%, 430px, calc(100dvh - 266px))' }}
+    >
+      <div className="absolute inset-0 overflow-hidden rounded-[36px] border border-amber-100/28 bg-[#160b12] shadow-[0_34px_96px_rgba(0,0,0,0.58)]">
         <img
           src="/assets/romance-board-clean.webp"
           alt=""
-          className="h-full w-full rounded-[34px] object-cover"
+          className="h-full w-full object-contain opacity-92 contrast-[1.08] saturate-[1.12]"
         />
-        <div className="absolute inset-0 rounded-[34px] bg-[radial-gradient(circle_at_50%_50%,transparent_50%,rgba(0,0,0,0.14)_86%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_46%,rgba(0,0,0,0.12)_88%)]" />
+        <div className="absolute inset-[4.7%] rounded-full border border-amber-100/18" />
+        <div className="absolute inset-[20.5%] rounded-full border border-amber-100/14" />
+        <div className="absolute inset-[35.5%] rounded-full border border-amber-100/12" />
       </div>
+
+      {boardMap.map((type, step) => {
+        if (step === 0 || step === 48) return null;
+        const point = getSpiralPoint(step);
+
+        return (
+          <div
+            key={`tile_${step}`}
+            className={`absolute z-10 flex h-[5.45%] w-[5.45%] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border shadow-[inset_0_1px_3px_rgba(255,255,255,0.34),0_3px_8px_rgba(0,0,0,0.28)] ring-1 ring-black/16 ${tileClassForType(type, step)}`}
+            style={{ left: `${point.x}%`, top: `${point.y}%` }}
+          >
+            <span className="h-[32%] w-[32%] rounded-full bg-white/28" />
+          </div>
+        );
+      })}
 
       {boardMap.map((type, step) => {
         if (step === 0 || step === 48) return null;
@@ -69,7 +104,7 @@ export function GameBoard({
         return (
           <div
             key={`marker_${step}`}
-            className={`absolute z-10 flex h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 items-center justify-center ${marker.className}`}
+            className={`absolute z-20 flex h-[5.45%] w-[5.45%] -translate-x-1/2 -translate-y-1/2 items-center justify-center ${marker.className}`}
             style={{ left: `${point.x}%`, top: `${point.y}%` }}
           >
             {marker.icon}

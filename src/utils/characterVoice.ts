@@ -2,6 +2,12 @@ import { TaskEventData } from '../types';
 import { getSharedAudioContext, resumeSharedAudioContext } from './audioSession';
 
 let lastSpokenAt = 0;
+let activeLocalVoice: AudioBufferSourceNode | null = null;
+
+const LOCAL_VOICE_FORMATS = ['mp3', 'm4a', 'wav', 'ogg'] as const;
+const LOCAL_VOICE_VOLUME = 0.9;
+const ENABLE_SYSTEM_TTS_FALLBACK = false;
+const localVoiceBufferCache = new Map<string, Promise<AudioBuffer | null>>();
 
 function playCueTone(kind: TaskEventData['type']) {
   const context = getSharedAudioContext();
@@ -28,6 +34,114 @@ function playCueTone(kind: TaskEventData['type']) {
 }
 
 type VoiceMood = 'trap' | 'collision' | 'bold' | 'kiss' | 'blush';
+type VoiceGender = 'male' | 'female';
+
+const diceLineIds: Record<string, string> = {
+  '这手气，今晚稳了。': 'big-roll',
+  '我先往前一点，你慢慢跟上来。': 'big-roll',
+  '骰子可能嫉妒我的实力。': 'small-roll',
+  '没关系，慢一点也很好玩。': 'small-roll',
+  '距离奖励又近了一点。': 'steady',
+  '别急，我们慢慢来。': 'steady',
+  '今晚这骰子明显站我这边。': 'hot-streak',
+  '今天好运好像一直陪着我。': 'hot-streak',
+  'That’s how you roll, babe.': 'big-roll',
+  'Come on, love. I will wait for you.': 'big-roll',
+  'The dice clearly fear my potential.': 'small-roll',
+  'It is okay. Slow can be sweet too.': 'small-roll',
+  'One step closer to the good part.': 'steady',
+  'No rush. The fun is catching up.': 'steady',
+  'The dice have excellent taste tonight.': 'hot-streak',
+  'Looks like luck is being very kind tonight.': 'hot-streak'
+};
+
+function genderForPlayer(playerId: number): VoiceGender {
+  return playerId === 0 ? 'male' : 'female';
+}
+
+function localVoiceCandidates(locale: TaskEventData['locale'], gender: VoiceGender, clipId: string) {
+  return LOCAL_VOICE_FORMATS.map(format => `/audio/voice/${locale}/${gender}/${clipId}.${format}`);
+}
+
+async function tryPlayAudioSource(src: string) {
+  if (activeLocalVoice) {
+    try {
+      activeLocalVoice.stop();
+    } catch {
+      // The source may already have ended.
+    }
+    activeLocalVoice = null;
+  }
+
+  const context = await resumeSharedAudioContext();
+  if (!context) return false;
+
+  const buffer = await getLocalVoiceBuffer(context, src);
+  if (!buffer) return false;
+
+  const source = context.createBufferSource();
+  const gain = context.createGain();
+
+  try {
+    source.buffer = buffer;
+    gain.gain.value = LOCAL_VOICE_VOLUME;
+    source.connect(gain);
+    gain.connect(context.destination);
+    source.onended = () => {
+      if (activeLocalVoice === source) activeLocalVoice = null;
+    };
+    activeLocalVoice = source;
+    source.start();
+    return true;
+  } catch {
+    if (activeLocalVoice === source) {
+      activeLocalVoice = null;
+    }
+    return false;
+  }
+}
+
+function getLocalVoiceBuffer(context: AudioContext, src: string) {
+  const cached = localVoiceBufferCache.get(src);
+  if (cached) return cached;
+
+  const promise = fetch(src, { cache: 'force-cache' })
+    .then(async response => {
+      if (!response.ok) return null;
+
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType && !contentType.startsWith('audio/')) return null;
+
+      const arrayBuffer = await response.arrayBuffer();
+      return await context.decodeAudioData(arrayBuffer.slice(0));
+    })
+    .catch(() => null);
+
+  localVoiceBufferCache.set(src, promise);
+  return promise;
+}
+
+async function playLocalVoiceClip(
+  locale: TaskEventData['locale'],
+  playerId: number,
+  clipId: string
+) {
+  const now = Date.now();
+  if (now - lastSpokenAt < 900) return true;
+
+  for (const src of localVoiceCandidates(locale, genderForPlayer(playerId), clipId)) {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    const didPlay = await tryPlayAudioSource(src);
+    if (didPlay) {
+      lastSpokenAt = now;
+      return true;
+    }
+  }
+
+  return false;
+}
 
 function moodForTask(taskData: TaskEventData): VoiceMood {
   const text = taskData.task.toLowerCase();
@@ -87,11 +201,11 @@ function lineForTask(taskData: TaskEventData) {
       blush: '好吧，你成功让我心动了。'
     };
     const femaleLines: Record<VoiceMood, string> = {
-      trap: '哎呀，这张有点坏哦。',
-      collision: '被我抓到了吧。',
-      bold: '嗯，这张我可不会装害羞。',
-      kiss: '再靠近一点嘛。',
-      blush: '讨厌，你把我弄脸红了。'
+      trap: '这张有点坏，不过我陪你。',
+      collision: '被我抓到啦，靠近一点。',
+      bold: '嗯，这张有点大胆，我们慢慢来。',
+      kiss: '再靠近一点，好吗。',
+      blush: '你这样，我真的会脸红。'
     };
     return isMale ? maleLines[mood] : femaleLines[mood];
   }
@@ -104,13 +218,41 @@ function lineForTask(taskData: TaskEventData) {
     blush: 'Okay, you win. I am definitely blushing.'
   };
   const femaleLines: Record<VoiceMood, string> = {
-    trap: 'Oh, this card woke up and chose chaos.',
-    collision: 'Got you, handsome. No refunds.',
-    bold: 'Well, look who is feeling brave tonight.',
-    kiss: 'Come closer. I promise to be mostly good.',
-    blush: 'Cute. You really thought I would not blush.'
+    trap: 'This one is a little naughty. I am with you.',
+    collision: 'I caught you. Come a little closer.',
+    bold: 'This one is bold. We can take it slow.',
+    kiss: 'Come a little closer, okay?',
+    blush: 'You are making me blush for real.'
   };
   return isMale ? maleLines[mood] : femaleLines[mood];
+}
+
+function voiceScore(voice: SpeechSynthesisVoice, preferredNames: string[], locale: TaskEventData['locale']) {
+  const name = voice.name.toLowerCase();
+  const lang = voice.lang.toLowerCase();
+  const languagePrefix = locale === 'zh' ? 'zh' : 'en';
+
+  if (!lang.startsWith(languagePrefix)) return -1;
+
+  let score = 0;
+  if (preferredNames.some(item => name.includes(item))) score += 40;
+  if (name.includes('siri') || name.includes('premium') || name.includes('enhanced')) score += 18;
+  if (name.includes('natural') || name.includes('neural')) score += 18;
+  if (voice.localService) score += 4;
+  if (name.includes('compact')) score -= 20;
+
+  return score;
+}
+
+function selectBestVoice(
+  voices: SpeechSynthesisVoice[],
+  preferredNames: string[],
+  locale: TaskEventData['locale']
+) {
+  return voices
+    .map(voice => ({ voice, score: voiceScore(voice, preferredNames, locale) }))
+    .filter(item => item.score >= 0)
+    .sort((a, b) => b.score - a.score)[0]?.voice || null;
 }
 
 function speakLine(line: string, playerId: number, locale: TaskEventData['locale'], didRetry = false) {
@@ -132,30 +274,24 @@ function speakLine(line: string, playerId: number, locale: TaskEventData['locale
     locale === 'zh'
       ? playerId === 0
         ? ['yunyang', 'kangkang', 'male', '男']
-        : ['tingting', 'huihui', 'female', '女']
+        : ['tingting', 'huihui', 'xiaoxiao', 'yaoyao', 'meijia', 'mei-jia', 'female', '女']
       : playerId === 0
         ? ['alex', 'daniel', 'arthur', 'david', 'mark', 'guy', 'fred', 'rishi']
-        : ['samantha', 'karen', 'moira', 'zira', 'victoria', 'fiona', 'ava', 'serena'];
-  const preferredVoice = voices.find(voice => {
-    const name = voice.name.toLowerCase();
-    const languageMatches = voice.lang.toLowerCase().startsWith(locale === 'zh' ? 'zh' : 'en');
-    return languageMatches && preferredNames.some(item => name.includes(item));
-  });
-  const languageFallback = voices.find(voice =>
-    voice.lang.toLowerCase().startsWith(locale === 'zh' ? 'zh' : 'en')
-  );
+        : ['samantha', 'karen', 'moira', 'zira', 'victoria', 'fiona', 'ava', 'serena', 'allison', 'susan'];
+  const selectedVoice = selectBestVoice(voices, preferredNames, locale);
+  const isFemale = playerId === 1;
 
-  utterance.voice = preferredVoice || languageFallback || null;
+  utterance.voice = selectedVoice;
   utterance.lang = locale === 'zh' ? 'zh-CN' : 'en-US';
-  utterance.rate = playerId === 0 ? 0.84 : 0.88;
-  utterance.pitch = preferredVoice ? 1 : playerId === 0 ? 0.72 : 1.22;
-  utterance.volume = 0.72;
+  utterance.rate = locale === 'zh' ? (isFemale ? 0.82 : 0.86) : (isFemale ? 0.9 : 0.92);
+  utterance.pitch = isFemale ? 1.03 : 0.92;
+  utterance.volume = isFemale ? 0.68 : 0.72;
   window.speechSynthesis.speak(utterance);
 }
 
 export function unlockCharacterVoice(locale: TaskEventData['locale']) {
   void resumeSharedAudioContext();
-  if (!('speechSynthesis' in window)) return;
+  if (!ENABLE_SYSTEM_TTS_FALLBACK || !('speechSynthesis' in window)) return;
 
   window.speechSynthesis.resume();
   const primer = new SpeechSynthesisUtterance('');
@@ -166,17 +302,46 @@ export function unlockCharacterVoice(locale: TaskEventData['locale']) {
 
 export function playCharacterVoice(taskData: TaskEventData) {
   playCueTone(taskData.type);
-  speakLine(lineForTask(taskData), taskData.initiatorPlayerId, taskData.locale);
+  const mood = moodForTask(taskData);
+  void playLocalVoiceClip(
+    taskData.locale,
+    taskData.initiatorPlayerId,
+    `task-${mood}`
+  ).then(didPlayLocalVoice => {
+    if (!didPlayLocalVoice && ENABLE_SYSTEM_TTS_FALLBACK) {
+      speakLine(lineForTask(taskData), taskData.initiatorPlayerId, taskData.locale);
+    }
+  });
 }
 
 export function playDiceReactionVoice(line: string, playerId: number, locale: TaskEventData['locale']) {
   if (locale === 'zh') {
     playCueTone('lucky');
   }
-  speakLine(line, playerId, locale);
+  const clipId = diceLineIds[line] ? `dice-${diceLineIds[line]}` : null;
+  if (!clipId) {
+    if (ENABLE_SYSTEM_TTS_FALLBACK) {
+      speakLine(line, playerId, locale);
+    }
+    return;
+  }
+
+  void playLocalVoiceClip(locale, playerId, clipId).then(didPlayLocalVoice => {
+    if (!didPlayLocalVoice && ENABLE_SYSTEM_TTS_FALLBACK) {
+      speakLine(line, playerId, locale);
+    }
+  });
 }
 
 export function stopCharacterVoice() {
+  if (activeLocalVoice) {
+    try {
+      activeLocalVoice.stop();
+    } catch {
+      // The source may already have ended.
+    }
+    activeLocalVoice = null;
+  }
   if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel();
   }

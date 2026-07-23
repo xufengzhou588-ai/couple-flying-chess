@@ -154,7 +154,7 @@ export function getDiceReaction(locale: Locale, playerId: number, result: number
         result,
         mood,
         title: '漂亮！',
-        line: isMale ? '这手气，今晚稳了。' : '跟紧一点哦，我可不等人。'
+        line: isMale ? '这手气，今晚稳了。' : '我先往前一点，你慢慢跟上来。'
       };
     }
     if (result === 1) {
@@ -163,7 +163,7 @@ export function getDiceReaction(locale: Locale, playerId: number, result: number
         result,
         mood,
         title: '就一点？',
-        line: isMale ? '骰子可能嫉妒我的实力。' : '我只是先让你一点点。'
+        line: isMale ? '骰子可能嫉妒我的实力。' : '没关系，慢一点也很好玩。'
       };
     }
     return {
@@ -171,7 +171,7 @@ export function getDiceReaction(locale: Locale, playerId: number, result: number
       result,
       mood,
       title: result === 3 ? '不错哦' : '慢慢来',
-      line: isMale ? '距离奖励又近了一点。' : '别急，好戏还在后面。'
+      line: isMale ? '距离奖励又近了一点。' : '别急，我们慢慢来。'
     };
   }
 
@@ -181,7 +181,7 @@ export function getDiceReaction(locale: Locale, playerId: number, result: number
       result,
       mood,
       title: 'Big move!',
-      line: isMale ? 'That’s how you roll, babe.' : 'Try to keep up, handsome.'
+      line: isMale ? 'That’s how you roll, babe.' : 'Come on, love. I will wait for you.'
     };
   }
   if (result === 1) {
@@ -190,7 +190,7 @@ export function getDiceReaction(locale: Locale, playerId: number, result: number
       result,
       mood,
       title: 'One. Seriously?',
-      line: isMale ? 'The dice clearly fear my potential.' : 'Cute. I was giving you a chance.'
+      line: isMale ? 'The dice clearly fear my potential.' : 'It is okay. Slow can be sweet too.'
     };
   }
   return {
@@ -198,7 +198,7 @@ export function getDiceReaction(locale: Locale, playerId: number, result: number
     result,
     mood,
     title: result === 3 ? 'Not bad' : 'Slow burn',
-    line: isMale ? 'One step closer to the good part.' : 'Relax. The fun is catching up.'
+    line: isMale ? 'One step closer to the good part.' : 'No rush. The fun is catching up.'
   };
 }
 
@@ -215,7 +215,7 @@ export function getHotStreakReaction(
       result: 4,
       mood: 'heart',
       title: `${streak} 连高点，手气发烫`,
-      line: isMale ? '今晚这骰子明显站我这边。' : '别眨眼，我的好运还没停。'
+      line: isMale ? '今晚这骰子明显站我这边。' : '今天好运好像一直陪着我。'
     };
   }
 
@@ -226,7 +226,7 @@ export function getHotStreakReaction(
     title: `${streak} big rolls. Hot streak!`,
     line: isMale
       ? 'The dice have excellent taste tonight.'
-      : 'Try to keep up. I am apparently irresistible to dice.'
+      : 'Looks like luck is being very kind tonight.'
   };
 }
 

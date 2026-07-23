@@ -5,11 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "clean:macos-junk": "find dist ios/App public src docs -name '._*' -type f -delete 2>/dev/null || true",
+    "build": "COPYFILE_DISABLE=1 COPY_EXTENDED_ATTRIBUTES_DISABLE=1 vite build && npm run clean:macos-junk",
     "lint": "eslint .",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
-    "ios:sync": "npm run build && cap sync ios",
+    "voice:check": "node scripts/check-local-voice-pack.mjs",
+    "voice:edge": "node scripts/generate-edge-voice-pack.mjs",
+    "voice:elevenlabs": "node scripts/generate-elevenlabs-voice-pack.mjs",
+    "ios:sync": "LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 COPYFILE_DISABLE=1 COPY_EXTENDED_ATTRIBUTES_DISABLE=1 npm run build && LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 COPYFILE_DISABLE=1 COPY_EXTENDED_ATTRIBUTES_DISABLE=1 cap sync ios && npm run clean:macos-junk",
     "ios:open": "cap open ios"
   },
   "dependencies": {

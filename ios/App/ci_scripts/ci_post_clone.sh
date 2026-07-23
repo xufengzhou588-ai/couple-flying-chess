@@ -3,6 +3,8 @@ set -e
 
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
+export COPYFILE_DISABLE=1
+export COPY_EXTENDED_ATTRIBUTES_DISABLE=1
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
