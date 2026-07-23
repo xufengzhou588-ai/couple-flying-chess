@@ -222,7 +222,7 @@ export function GameView({
           </div>
         </header>
 
-        <div className="relative flex flex-1 items-center justify-center px-3 py-1">
+        <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden px-3 py-1">
           <GameBoard
             boardMap={boardMap}
             players={players}

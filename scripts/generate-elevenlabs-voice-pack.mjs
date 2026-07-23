@@ -31,6 +31,37 @@ const modelId = process.env.ELEVENLABS_MODEL_ID || 'eleven_multilingual_v2';
 const scope = process.env.VOICE_PACK_SCOPE || 'zh:female';
 const outputFormat = process.env.ELEVENLABS_OUTPUT_FORMAT || 'mp3_44100_128';
 
+function numberFromEnv(key, fallback) {
+  const value = process.env[key];
+  if (!value) return fallback;
+
+  const parsed = Number(value);
+  if (Number.isNaN(parsed)) return fallback;
+  return parsed;
+}
+
+function booleanFromEnv(key, fallback) {
+  const value = process.env[key];
+  if (!value) return fallback;
+  return ['1', 'true', 'yes', 'on'].includes(value.toLowerCase());
+}
+
+const defaultVoiceSettings = {
+  stability: numberFromEnv('ELEVENLABS_STABILITY', 0.58),
+  similarity_boost: numberFromEnv('ELEVENLABS_SIMILARITY_BOOST', 0.78),
+  style: numberFromEnv('ELEVENLABS_STYLE', 0.24),
+  use_speaker_boost: booleanFromEnv('ELEVENLABS_USE_SPEAKER_BOOST', true)
+};
+
+const voiceSettingsByScope = {
+  'en:female': {
+    stability: numberFromEnv('ELEVENLABS_STABILITY_EN_FEMALE', defaultVoiceSettings.stability),
+    similarity_boost: numberFromEnv('ELEVENLABS_SIMILARITY_BOOST_EN_FEMALE', defaultVoiceSettings.similarity_boost),
+    style: numberFromEnv('ELEVENLABS_STYLE_EN_FEMALE', defaultVoiceSettings.style),
+    use_speaker_boost: booleanFromEnv('ELEVENLABS_USE_SPEAKER_BOOST_EN_FEMALE', defaultVoiceSettings.use_speaker_boost)
+  }
+};
+
 const voiceIds = {
   'zh:male': process.env.ELEVENLABS_VOICE_ID_ZH_MALE || process.env.ELEVENLABS_VOICE_ID_MALE || process.env.ELEVENLABS_VOICE_ID,
   'zh:female': process.env.ELEVENLABS_VOICE_ID_ZH_FEMALE || process.env.ELEVENLABS_VOICE_ID_FEMALE || process.env.ELEVENLABS_VOICE_ID,
@@ -73,14 +104,14 @@ const lines = {
     'dice-hot-streak': 'The dice have excellent taste tonight.'
   },
   'en:female': {
-    'task-trap': 'This one is a little naughty. I am with you.',
-    'task-collision': 'I caught you. Come a little closer.',
-    'task-bold': 'This one is bold. We can take it slow.',
-    'task-kiss': 'Come a little closer, okay?',
-    'task-blush': 'You are making me blush for real.',
-    'dice-big-roll': 'Come on, love. I will wait for you.',
-    'dice-small-roll': 'It is okay. Slow can be sweet too.',
-    'dice-steady': 'No rush. The fun is catching up.',
+    'task-trap': 'Mmm... this one is a little naughty. I am with you.',
+    'task-collision': 'I caught you... come a little closer.',
+    'task-bold': 'This one is bold... we can take it slow.',
+    'task-kiss': 'Come a little closer... okay?',
+    'task-blush': 'You are making me blush... for real.',
+    'dice-big-roll': 'Come on, love... I will wait for you.',
+    'dice-small-roll': 'It is okay... slow can be sweet too.',
+    'dice-steady': 'No rush... the fun is catching up.',
     'dice-hot-streak': 'Looks like luck is being very kind tonight.'
   }
 };
@@ -112,7 +143,7 @@ async function listVoices() {
   }
 }
 
-async function generateClip(voiceId, text, relativeOutputPath) {
+async function generateClip(voiceId, text, relativeOutputPath, voiceSettings) {
   const url = new URL(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`);
   url.searchParams.set('output_format', outputFormat);
 
@@ -125,12 +156,7 @@ async function generateClip(voiceId, text, relativeOutputPath) {
     body: JSON.stringify({
       text,
       model_id: modelId,
-      voice_settings: {
-        stability: 0.58,
-        similarity_boost: 0.78,
-        style: 0.24,
-        use_speaker_boost: true
-      }
+      voice_settings: voiceSettings
     })
   });
 
@@ -172,11 +198,15 @@ for (const item of selectedScopes) {
   }
 
   const [locale, gender] = item.split(':');
+  const voiceSettings = voiceSettingsByScope[item] || defaultVoiceSettings;
+  console.log(`Generating ${item} with voice settings: ${JSON.stringify(voiceSettings)}`);
+
   for (const [clipId, text] of Object.entries(lines[item])) {
     await generateClip(
       voiceId,
       text,
-      join('public', 'audio', 'voice', locale, gender, `${clipId}.mp3`)
+      join('public', 'audio', 'voice', locale, gender, `${clipId}.mp3`),
+      voiceSettings
     );
   }
 }

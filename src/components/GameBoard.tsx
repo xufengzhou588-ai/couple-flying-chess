@@ -24,32 +24,18 @@ function getSpiralPoint(step: number) {
   };
 }
 
-function tileClassForType(type: TileType, step: number) {
-  if (type === 'lucky') {
-    return 'border-rose-100/84 bg-rose-300/82 shadow-[0_0_14px_rgba(251,113,133,0.54)]';
-  }
-
-  if (type === 'trap') {
-    return 'border-amber-100/84 bg-amber-200/84 shadow-[0_0_14px_rgba(251,191,36,0.42)]';
-  }
-
-  return step % 2 === 0
-    ? 'border-amber-100/60 bg-[#e9bd72]/78'
-    : 'border-rose-100/42 bg-[#791b39]/78';
-}
-
 function markerForType(type: TileType) {
   if (type === 'lucky') {
     return {
-      className: 'text-white drop-shadow-[0_0_8px_rgba(251,113,133,0.92)]',
-      icon: <Heart size={12} fill="currentColor" />
+      className: 'border-rose-100/58 bg-rose-400/36 text-white shadow-[0_0_14px_rgba(251,113,133,0.44)]',
+      icon: <Heart size={13} fill="currentColor" />
     };
   }
 
   if (type === 'trap') {
     return {
-      className: 'text-[#3a1305] drop-shadow-[0_0_7px_rgba(251,191,36,0.72)]',
-      icon: <Flame size={12} />
+      className: 'border-amber-100/55 bg-amber-200/42 text-[#3a1305] shadow-[0_0_12px_rgba(251,191,36,0.34)]',
+      icon: <Flame size={13} />
     };
   }
 
@@ -66,34 +52,16 @@ export function GameBoard({
   return (
     <div
       className="relative aspect-square shrink-0"
-      style={{ width: 'min(100%, 430px, calc(100dvh - 266px))' }}
+      style={{ width: 'min(92vw, 400px, calc(100vh - 318px))' }}
     >
       <div className="absolute inset-0 overflow-hidden rounded-[36px] border border-amber-100/28 bg-[#160b12] shadow-[0_34px_96px_rgba(0,0,0,0.58)]">
         <img
           src="/assets/romance-board-clean.webp"
           alt=""
-          className="h-full w-full object-contain opacity-92 contrast-[1.08] saturate-[1.12]"
+          className="h-full w-full object-contain opacity-[0.96] contrast-[1.12] saturate-[1.16]"
         />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_46%,rgba(0,0,0,0.12)_88%)]" />
-        <div className="absolute inset-[4.7%] rounded-full border border-amber-100/18" />
-        <div className="absolute inset-[20.5%] rounded-full border border-amber-100/14" />
-        <div className="absolute inset-[35.5%] rounded-full border border-amber-100/12" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_54%,rgba(0,0,0,0.08)_92%)]" />
       </div>
-
-      {boardMap.map((type, step) => {
-        if (step === 0 || step === 48) return null;
-        const point = getSpiralPoint(step);
-
-        return (
-          <div
-            key={`tile_${step}`}
-            className={`absolute z-10 flex h-[5.45%] w-[5.45%] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border shadow-[inset_0_1px_3px_rgba(255,255,255,0.34),0_3px_8px_rgba(0,0,0,0.28)] ring-1 ring-black/16 ${tileClassForType(type, step)}`}
-            style={{ left: `${point.x}%`, top: `${point.y}%` }}
-          >
-            <span className="h-[32%] w-[32%] rounded-full bg-white/28" />
-          </div>
-        );
-      })}
 
       {boardMap.map((type, step) => {
         if (step === 0 || step === 48) return null;
@@ -104,7 +72,7 @@ export function GameBoard({
         return (
           <div
             key={`marker_${step}`}
-            className={`absolute z-20 flex h-[5.45%] w-[5.45%] -translate-x-1/2 -translate-y-1/2 items-center justify-center ${marker.className}`}
+            className={`absolute z-20 flex h-[5.1%] w-[5.1%] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border backdrop-blur-[1px] ${marker.className}`}
             style={{ left: `${point.x}%`, top: `${point.y}%` }}
           >
             {marker.icon}
@@ -171,7 +139,7 @@ export function GameBoard({
         })}
       </div>
 
-      <div className="absolute left-4 top-4 z-20 rounded-full border border-white/12 bg-black/28 px-3 py-1.5 text-[11px] font-black text-white/80 backdrop-blur-md">
+      <div className="absolute left-3 top-3 z-20 rounded-full border border-white/12 bg-black/24 px-2.5 py-1.5 text-[10px] font-black text-white/76 backdrop-blur-md">
         <span className="inline-flex items-center gap-1">
           <Sparkles size={12} className="text-amber-200" />
           {copy.routeName}
