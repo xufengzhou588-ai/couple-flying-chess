@@ -132,6 +132,64 @@ const rewards = {
       description: 'Pitch one mutually wanted reward. Keep negotiations charming.',
       gentleVersion: 'No deal? It automatically becomes a 30-second hug.'
     }
+  ],
+  es: [
+    {
+      id: 'slow-kiss',
+      category: 'flirty',
+      title: 'Beso ganador',
+      description: 'El ganador elige el estilo. El beso dura 30 segundos.',
+      gentleVersion: 'Hazlo un beso lento de 15 segundos o un beso en la frente.'
+    },
+    {
+      id: 'massage',
+      category: 'sweet',
+      title: 'Servicio cinco estrellas',
+      description: 'Cobra cinco minutos de masaje en hombros, manos o piernas.',
+      gentleVersion: 'Hazlo un masaje de hombros de dos minutos.'
+    },
+    {
+      id: 'date-choice',
+      category: 'sweet',
+      title: 'Elección de cita',
+      description: 'El ganador elige el tema y el lugar de la próxima cita.',
+      gentleVersion: 'Cada quien propone una idea. El ganador elige una.'
+    },
+    {
+      id: 'body-choice',
+      category: 'after-dark',
+      title: 'Atención favorita',
+      description: 'Elige una forma de atención aprobada por ambos durante 60 segundos.',
+      gentleVersion: 'Hazlo por encima de la ropa o cambia por un beso de 20 segundos.'
+    },
+    {
+      id: 'private-wish',
+      category: 'after-dark',
+      title: 'Deseo de la noche',
+      description: 'Nombra un deseo romántico. Tu pareja decide la versión cómoda.',
+      gentleVersion: 'Comparte el deseo ahora y deja la acción para otra noche.'
+    },
+    {
+      id: 'breakfast',
+      category: 'sweet',
+      title: 'Premio de mañana',
+      description: 'Quien quede segundo se encarga del desayuno, café o mimos de descanso.',
+      gentleVersion: 'Hazlo una bebida favorita por la mañana.'
+    },
+    {
+      id: 'outfit',
+      category: 'flirty',
+      title: 'Poder de estilo',
+      description: 'Elige un outfit para esta noche o para la próxima cita.',
+      gentleVersion: 'Elige solo un accesorio o color.'
+    },
+    {
+      id: 'wild-card',
+      category: 'wild',
+      title: 'Carta libre',
+      description: 'Propón un premio que ambos quieran. Negocien con encanto.',
+      gentleVersion: '¿Sin acuerdo? Se convierte en un abrazo de 30 segundos.'
+    }
   ]
 } satisfies Record<Locale, FinalRewardOption[]>;
 
@@ -172,6 +230,34 @@ export function getDiceReaction(locale: Locale, playerId: number, result: number
       mood,
       title: result === 3 ? '不错哦' : '慢慢来',
       line: isMale ? '距离奖励又近了一点。' : '别急，我们慢慢来。'
+    };
+  }
+
+  if (locale === 'es') {
+    if (result === 4) {
+      return {
+        playerId,
+        result,
+        mood,
+        title: '¡Gran jugada!',
+        line: isMale ? 'Así se tira el dado, amor.' : 'Ven, amor. Te espero.'
+      };
+    }
+    if (result === 1) {
+      return {
+        playerId,
+        result,
+        mood,
+        title: '¿Solo uno?',
+        line: isMale ? 'El dado le teme a mi potencial.' : 'Está bien. Ir lento también tiene encanto.'
+      };
+    }
+    return {
+      playerId,
+      result,
+      mood,
+      title: result === 3 ? 'Nada mal' : 'Fuego lento',
+      line: isMale ? 'Un paso más cerca de lo bueno.' : 'Sin prisa. Alcanzarte es parte del juego.'
     };
   }
 
@@ -219,6 +305,18 @@ export function getHotStreakReaction(
     };
   }
 
+  if (locale === 'es') {
+    return {
+      playerId,
+      result: 4,
+      mood: 'heart',
+      title: `${streak} tiradas grandes. ¡Racha caliente!`,
+      line: isMale
+        ? 'El dado tiene muy buen gusto esta noche.'
+        : 'Parece que la suerte me está tratando muy bien.'
+    };
+  }
+
   return {
     playerId,
     result: 4,
@@ -241,6 +339,11 @@ export function getMilestoneEvent(locale: Locale, threshold: 25 | 50 | 75): Mile
       25: ['First unlock', 'Trade one compliment you secretly hoped to hear tonight.'],
       50: ['Chemistry bonus', 'Add ten seconds to the next dare you both accept.'],
       75: ['Final reward preview', 'Each person gives one clue about the reward they hope appears.']
+    },
+    es: {
+      25: ['Primer desbloqueo', 'Intercambien un cumplido que secretamente querían escuchar esta noche.'],
+      50: ['Bono de química', 'Suma diez segundos al próximo reto que ambos acepten.'],
+      75: ['Vista previa del premio', 'Cada persona da una pista del premio que espera ver.']
     }
   } as const;
   const [title, line] = content[locale][threshold];

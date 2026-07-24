@@ -103,7 +103,7 @@ function applyDefaultThemeLocale(themes: Theme[], locale: Locale) {
 function normalizeGameState(saved: unknown): GameState | null {
   if (!isRecord(saved)) return null;
 
-  const locale: Locale = saved.locale === 'en' ? 'en' : 'zh';
+  const locale: Locale = saved.locale === 'en' || saved.locale === 'es' ? saved.locale : 'zh';
   const themes = applyDefaultThemeLocale(normalizeThemes(saved.themes, locale), locale);
   const players = normalizePlayers(saved.players, locale).map(player => {
     if (player.themeId === null) return player;

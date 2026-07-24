@@ -3,7 +3,7 @@ import { join } from 'node:path';
 
 const root = process.cwd();
 const formats = ['mp3', 'm4a', 'wav', 'ogg'];
-const locales = ['zh', 'en'];
+const locales = ['zh', 'en', 'es'];
 const genders = ['male', 'female'];
 const clips = [
   'task-trap',

@@ -52,7 +52,15 @@ const diceLineIds: Record<string, string> = {
   'One step closer to the good part.': 'steady',
   'No rush. The fun is catching up.': 'steady',
   'The dice have excellent taste tonight.': 'hot-streak',
-  'Looks like luck is being very kind tonight.': 'hot-streak'
+  'Looks like luck is being very kind tonight.': 'hot-streak',
+  'Así se tira el dado, amor.': 'big-roll',
+  'Ven, amor. Te espero.': 'big-roll',
+  'El dado le teme a mi potencial.': 'small-roll',
+  'Está bien. Ir lento también tiene encanto.': 'small-roll',
+  'Un paso más cerca de lo bueno.': 'steady',
+  'Sin prisa. Alcanzarte es parte del juego.': 'steady',
+  'El dado tiene muy buen gusto esta noche.': 'hot-streak',
+  'Parece que la suerte me está tratando muy bien.': 'hot-streak'
 };
 
 function genderForPlayer(playerId: number): VoiceGender {
@@ -210,6 +218,24 @@ function lineForTask(taskData: TaskEventData) {
     return isMale ? maleLines[mood] : femaleLines[mood];
   }
 
+  if (taskData.locale === 'es') {
+    const maleLines: Record<VoiceMood, string> = {
+      trap: 'Esto se puso interesante. Voy.',
+      collision: 'Te alcancé, no te me escapes.',
+      bold: 'Este reto tiene carácter. Me gusta.',
+      kiss: 'Ven un poco más cerca.',
+      blush: 'Bien. Ahora sí me hiciste sonreír.'
+    };
+    const femaleLines: Record<VoiceMood, string> = {
+      trap: 'Mmm... este reto tiene algo travieso. Yo te acompaño.',
+      collision: 'Te alcancé... acércate un poquito.',
+      bold: 'Este reto es atrevido... vamos despacio.',
+      kiss: 'Acércate un poquito... ¿sí?',
+      blush: 'Me estás haciendo sonrojar... de verdad.'
+    };
+    return isMale ? maleLines[mood] : femaleLines[mood];
+  }
+
   const maleLines: Record<VoiceMood, string> = {
     trap: 'Well, that escalated quickly. I am in.',
     collision: 'Caught you, troublemaker.',
@@ -282,8 +308,8 @@ function speakLine(line: string, playerId: number, locale: TaskEventData['locale
   const isFemale = playerId === 1;
 
   utterance.voice = selectedVoice;
-  utterance.lang = locale === 'zh' ? 'zh-CN' : 'en-US';
-  utterance.rate = locale === 'zh' ? (isFemale ? 0.82 : 0.86) : (isFemale ? 0.9 : 0.92);
+  utterance.lang = locale === 'zh' ? 'zh-CN' : locale === 'es' ? 'es-US' : 'en-US';
+  utterance.rate = locale === 'zh' ? (isFemale ? 0.82 : 0.86) : locale === 'es' ? (isFemale ? 0.88 : 0.9) : (isFemale ? 0.9 : 0.92);
   utterance.pitch = isFemale ? 1.03 : 0.92;
   utterance.volume = isFemale ? 0.68 : 0.72;
   window.speechSynthesis.speak(utterance);
@@ -295,7 +321,7 @@ export function unlockCharacterVoice(locale: TaskEventData['locale']) {
 
   window.speechSynthesis.resume();
   const primer = new SpeechSynthesisUtterance('');
-  primer.lang = locale === 'zh' ? 'zh-CN' : 'en-US';
+  primer.lang = locale === 'zh' ? 'zh-CN' : locale === 'es' ? 'es-US' : 'en-US';
   primer.volume = 0.01;
   window.speechSynthesis.speak(primer);
 }

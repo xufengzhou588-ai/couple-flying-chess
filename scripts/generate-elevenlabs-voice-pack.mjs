@@ -66,7 +66,9 @@ const voiceIds = {
   'zh:male': process.env.ELEVENLABS_VOICE_ID_ZH_MALE || process.env.ELEVENLABS_VOICE_ID_MALE || process.env.ELEVENLABS_VOICE_ID,
   'zh:female': process.env.ELEVENLABS_VOICE_ID_ZH_FEMALE || process.env.ELEVENLABS_VOICE_ID_FEMALE || process.env.ELEVENLABS_VOICE_ID,
   'en:male': process.env.ELEVENLABS_VOICE_ID_EN_MALE || process.env.ELEVENLABS_VOICE_ID_MALE || process.env.ELEVENLABS_VOICE_ID,
-  'en:female': process.env.ELEVENLABS_VOICE_ID_EN_FEMALE || process.env.ELEVENLABS_VOICE_ID_FEMALE || process.env.ELEVENLABS_VOICE_ID
+  'en:female': process.env.ELEVENLABS_VOICE_ID_EN_FEMALE || process.env.ELEVENLABS_VOICE_ID_FEMALE || process.env.ELEVENLABS_VOICE_ID,
+  'es:male': process.env.ELEVENLABS_VOICE_ID_ES_MALE || process.env.ELEVENLABS_VOICE_ID_EN_MALE || process.env.ELEVENLABS_VOICE_ID_MALE || process.env.ELEVENLABS_VOICE_ID,
+  'es:female': process.env.ELEVENLABS_VOICE_ID_ES_FEMALE || process.env.ELEVENLABS_VOICE_ID_EN_FEMALE || process.env.ELEVENLABS_VOICE_ID_FEMALE || process.env.ELEVENLABS_VOICE_ID
 };
 
 const lines = {
@@ -113,6 +115,28 @@ const lines = {
     'dice-small-roll': 'It is okay... slow can be sweet too.',
     'dice-steady': 'No rush... the fun is catching up.',
     'dice-hot-streak': 'Looks like luck is being very kind tonight.'
+  },
+  'es:male': {
+    'task-trap': 'Esto se puso interesante. Voy.',
+    'task-collision': 'Te alcancé, no te me escapes.',
+    'task-bold': 'Este reto tiene carácter. Me gusta.',
+    'task-kiss': 'Ven un poco más cerca.',
+    'task-blush': 'Bien. Ahora sí me hiciste sonreír.',
+    'dice-big-roll': 'Así se tira el dado, amor.',
+    'dice-small-roll': 'El dado le teme a mi potencial.',
+    'dice-steady': 'Un paso más cerca de lo bueno.',
+    'dice-hot-streak': 'El dado tiene muy buen gusto esta noche.'
+  },
+  'es:female': {
+    'task-trap': 'Mmm... este reto tiene algo travieso. Yo te acompaño.',
+    'task-collision': 'Te alcancé... acércate un poquito.',
+    'task-bold': 'Este reto es atrevido... vamos despacio.',
+    'task-kiss': 'Acércate un poquito... ¿sí?',
+    'task-blush': 'Me estás haciendo sonrojar... de verdad.',
+    'dice-big-roll': 'Ven, amor... te espero.',
+    'dice-small-roll': 'Está bien... ir lento también tiene encanto.',
+    'dice-steady': 'Sin prisa... alcanzarte es parte del juego.',
+    'dice-hot-streak': 'Parece que la suerte me está tratando muy bien.'
   }
 };
 

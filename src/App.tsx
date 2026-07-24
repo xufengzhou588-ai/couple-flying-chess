@@ -20,6 +20,8 @@ import { InvitePartnerModal } from './components/modals/InvitePartnerModal';
 import { localeLabels, t } from './i18n';
 import { getFinalRewards } from './data/gameExperience';
 
+const localeOrder = ['zh', 'en', 'es'] as const;
+
 function App() {
   const {
     state,
@@ -61,6 +63,7 @@ function App() {
 
   const selectedPlayer = state.players.find(p => p.id === selectedPlayerId) || state.players[0];
   const copy = t[state.locale];
+  const nextLocale = localeOrder[(localeOrder.indexOf(state.locale) + 1) % localeOrder.length];
   const selectableThemes = state.themes.filter(
     t => t.audience === 'common' || t.audience === selectedPlayer.role
   );
@@ -123,9 +126,9 @@ function App() {
               <AmbientSound copy={copy} inGame={state.view === 'game'} />
               <button
                 className="h-9 rounded-2xl border border-white/15 bg-white/10 px-3 text-[11px] font-black text-white/80 transition active:scale-95"
-                onClick={() => switchLocale(state.locale === 'zh' ? 'en' : 'zh')}
+                onClick={() => switchLocale(nextLocale)}
               >
-                {localeLabels[state.locale === 'zh' ? 'en' : 'zh']}
+                {localeLabels[nextLocale]}
               </button>
               <div className="rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[11px] font-semibold text-white/80">
                 {copy.edition}

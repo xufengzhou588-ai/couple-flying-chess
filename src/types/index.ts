@@ -12,7 +12,7 @@ export interface Player {
 }
 
 export type ThemeAudience = 'common' | 'male' | 'female';
-export type Locale = 'zh' | 'en';
+export type Locale = 'zh' | 'en' | 'es';
 export type FinalRewardId =
   | 'slow-kiss'
   | 'massage'
