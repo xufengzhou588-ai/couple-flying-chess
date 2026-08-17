@@ -49,7 +49,7 @@ export function VideoCallWidget({ copy }: VideoCallWidgetProps) {
     return (
       <button
         type="button"
-        className="fixed right-4 top-[calc(env(safe-area-inset-top)+88px)] z-[80] flex h-11 w-11 items-center justify-center rounded-2xl border border-white/14 bg-[#171018]/86 text-white shadow-2xl backdrop-blur-xl transition active:scale-95"
+        className="cfc-action-secondary fixed right-4 top-[calc(env(safe-area-inset-top)+88px)] z-[80] h-11 w-11 rounded-2xl p-0 text-white shadow-2xl backdrop-blur-xl"
         onClick={() => setIsOpen(true)}
         aria-label={copy.video.open}
       >
@@ -59,12 +59,12 @@ export function VideoCallWidget({ copy }: VideoCallWidgetProps) {
   }
 
   return (
-    <div className="fixed right-3 top-[calc(env(safe-area-inset-top)+86px)] z-[80] w-[136px] overflow-hidden rounded-[24px] border border-white/14 bg-[#120d16]/92 shadow-2xl backdrop-blur-xl">
-      <div className="flex items-center justify-between gap-2 border-b border-white/10 px-2.5 py-2">
+    <div className="cfc-dialog-card fixed right-3 top-[calc(env(safe-area-inset-top)+86px)] z-[80] w-[136px] overflow-hidden rounded-[24px] shadow-2xl backdrop-blur-xl">
+      <div className="flex items-center justify-between gap-2 border-b border-[var(--cfc-border)] px-2.5 py-2">
         <div className="min-w-0 truncate text-[10px] font-black text-white">{copy.video.title}</div>
         <button
           type="button"
-          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-xl bg-white/10 text-white/72 active:scale-95"
+          className="cfc-action-secondary h-7 w-7 shrink-0 rounded-xl p-0 text-white/72"
           onClick={() => setIsOpen(false)}
           aria-label={copy.video.open}
         >
@@ -72,10 +72,10 @@ export function VideoCallWidget({ copy }: VideoCallWidgetProps) {
         </button>
       </div>
 
-      <div className="relative m-2 aspect-[9/13] overflow-hidden rounded-[19px] border border-white/10 bg-black/36">
+      <div className="relative m-2 aspect-[9/13] overflow-hidden rounded-[19px] border border-[var(--cfc-border)] bg-black/36">
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/[0.045] text-center">
           <UserRound size={26} className="text-rose-100/72" />
-          <div className="mt-2 px-3 text-[10px] font-bold leading-tight text-white/56">
+          <div className="mt-2 px-3 text-[10px] font-bold leading-tight text-[var(--cfc-text-muted)]">
             {copy.video.waiting}
           </div>
         </div>
@@ -108,7 +108,7 @@ export function VideoCallWidget({ copy }: VideoCallWidgetProps) {
       <div className="px-2 pb-2">
         <button
           type="button"
-          className="flex h-8 w-full items-center justify-center gap-1 rounded-2xl bg-white text-[10px] font-black text-[#16090f] active:scale-[0.98]"
+          className="cfc-action-primary h-8 w-full gap-1 rounded-2xl text-[10px]"
           onClick={stream ? stopCamera : startCamera}
         >
           {stream ? <VideoOff size={14} /> : <Video size={14} />}

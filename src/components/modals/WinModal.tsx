@@ -3,6 +3,7 @@ import { Check, Crown, Heart, MoonStar, RotateCcw, Sparkles, Zap } from 'lucide-
 import { getFinalRewards, type FinalRewardOption } from '../../data/gameExperience';
 import { Translation } from '../../i18n';
 import { FinalRewardId, Locale } from '../../types';
+import { assetPath } from '../../utils/assets';
 
 interface WinModalProps {
   isOpen: boolean;
@@ -54,10 +55,11 @@ export function WinModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#07050a]/94 px-5 backdrop-blur-md">
-      <div className="max-h-[92vh] w-full max-w-sm overflow-y-auto rounded-[28px] border border-white/12 bg-[#150e18] shadow-2xl no-scrollbar">
+    <div className="fixed inset-0 z-[120] flex items-center justify-center px-4 py-4">
+      <div className="cfc-modal-scrim" />
+      <div className="cfc-dialog-card relative max-h-[calc(100dvh-32px)] w-full max-w-sm overflow-y-auto no-scrollbar">
         <div className="relative h-36">
-          <img src="/assets/couple-game-hero.webp" alt="" className="h-full w-full object-cover opacity-58" />
+          <img src={assetPath('assets/couple-game-hero.jpg')} alt="" className="h-full w-full object-cover opacity-58" />
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.08),rgba(21,14,24,0.98))]" />
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-[22px] border border-amber-100/40 bg-amber-100 text-[#2c1504] shadow-[0_18px_60px_rgba(251,191,36,0.25)]">
@@ -76,14 +78,14 @@ export function WinModal({
             <>
               <h3 className="mt-4 text-xl font-black text-white">{copy.reward.finalTitle}</h3>
               <p className="mt-1 text-xs leading-relaxed text-white/52">{copy.reward.finalHint}</p>
-              <div className="mt-4 space-y-2.5 text-left">
+                <div className="mt-4 space-y-2.5 text-left">
                 {choices.map(reward => {
                   const Icon = categoryIcons[reward.category];
                   return (
                     <button
                       key={reward.id}
                       type="button"
-                      className="flex w-full items-center gap-3 rounded-[18px] border border-white/10 bg-white/[0.06] p-3 transition active:scale-[0.99]"
+                      className="cfc-select-card cfc-pressable flex w-full items-center gap-3 rounded-[18px] p-3"
                       onClick={() => setSelectedReward(reward)}
                     >
                       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-100/12 text-amber-100">
@@ -112,7 +114,7 @@ export function WinModal({
               <div className="mt-3 grid grid-cols-2 gap-3 text-left">
                 <button
                   type="button"
-                  className="rounded-[18px] border border-rose-200/25 bg-rose-300/12 p-3 transition active:scale-[0.98]"
+                  className="cfc-select-card cfc-pressable rounded-[18px] border-rose-200/25 bg-rose-300/12 p-3"
                   onClick={() => setVersion('standard')}
                 >
                   <div className="font-black text-rose-100">{copy.reward.standard}</div>
@@ -122,7 +124,7 @@ export function WinModal({
                 </button>
                 <button
                   type="button"
-                  className="rounded-[18px] border border-sky-200/25 bg-sky-300/10 p-3 transition active:scale-[0.98]"
+                  className="cfc-select-card cfc-pressable rounded-[18px] border-sky-200/25 bg-sky-300/10 p-3"
                   onClick={() => setVersion('gentle')}
                 >
                   <div className="font-black text-sky-100">{copy.reward.gentle}</div>
@@ -140,7 +142,7 @@ export function WinModal({
                 <Check size={26} />
               </div>
               <h3 className="mt-3 text-xl font-black text-white">{copy.reward.confirmed}</h3>
-              <div className="mt-4 rounded-[20px] border border-white/10 bg-white/[0.06] p-4">
+              <div className="cfc-info-card mt-4 rounded-[20px] p-4">
                 <div className="text-lg font-black text-amber-100">{selectedReward.title}</div>
                 <p className="mt-2 text-sm leading-relaxed text-white/72">
                   {version === 'standard' ? selectedReward.description : selectedReward.gentleVersion}
@@ -148,7 +150,7 @@ export function WinModal({
               </div>
               <button
                 type="button"
-                className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-white text-sm font-black text-[#14070d] transition active:scale-[0.98]"
+                className="cfc-action-primary mt-5 w-full"
                 onClick={restart}
               >
                 <RotateCcw size={18} />

@@ -41,9 +41,10 @@ export function RewardSetupModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[130] flex items-end justify-center bg-black/76 backdrop-blur-md">
-      <div className="max-h-[90vh] w-full max-w-[430px] overflow-y-auto rounded-t-[28px] border-t border-white/12 bg-[#130d16] p-5 shadow-2xl no-scrollbar">
-        <div className="mx-auto mb-5 h-1 w-12 rounded-full bg-white/24" />
+    <div className="fixed inset-0 z-[130] flex items-end justify-center">
+      <button type="button" className="cfc-modal-scrim" onClick={onClose} aria-label={copy.reward.done} />
+      <div className="cfc-sheet relative w-full max-w-[430px] overflow-hidden">
+        <div className="cfc-sheet-handle" />
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
             <div className="mb-2 flex items-center gap-2 text-amber-200">
@@ -51,15 +52,15 @@ export function RewardSetupModal({
               <span className="text-xs font-black uppercase">{copy.finalRewards}</span>
             </div>
             <h3 className="text-2xl font-black text-white">{copy.reward.setupTitle}</h3>
-            <p className="mt-2 text-xs leading-relaxed text-white/52">{copy.reward.setupHint}</p>
+            <p className="mt-2 text-xs leading-relaxed text-[var(--cfc-text-muted)]">{copy.reward.setupHint}</p>
           </div>
-          <div className="rounded-2xl bg-white/10 px-3 py-2 text-center">
+          <div className="cfc-info-card rounded-2xl px-3 py-2 text-center">
             <div className="text-lg font-black text-white">{selectedIds.length}/5</div>
-            <div className="text-[9px] text-white/48">{copy.reward.selected}</div>
+            <div className="text-[9px] text-[var(--cfc-text-subtle)]">{copy.reward.selected}</div>
           </div>
         </div>
 
-        <div className="space-y-2.5">
+        <div className="cfc-modal-scroll max-h-[calc(90dvh-180px)] space-y-2.5">
           {rewards.map(reward => {
             const selected = selectedIds.includes(reward.id);
             const Icon = categoryIcons[reward.category];
@@ -67,11 +68,8 @@ export function RewardSetupModal({
               <button
                 key={reward.id}
                 type="button"
-                className={`flex w-full items-center gap-3 rounded-[18px] border p-3 text-left transition active:scale-[0.99] ${
-                  selected
-                    ? 'border-amber-100/45 bg-amber-100/12'
-                    : 'border-white/10 bg-white/[0.05]'
-                }`}
+                className="cfc-select-card cfc-pressable flex w-full items-center gap-3 rounded-[18px] p-3 text-left"
+                data-selected={selected}
                 onClick={() => toggle(reward.id)}
               >
                 <div
@@ -84,21 +82,21 @@ export function RewardSetupModal({
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="font-black text-white">{reward.title}</span>
-                    <span className="rounded-full bg-white/8 px-2 py-0.5 text-[9px] font-bold text-white/48">
+                    <span className="cfc-chip min-h-0 px-2 py-0.5 text-[9px] text-[var(--cfc-text-muted)]">
                       {copy.reward.categories[reward.category]}
                     </span>
                   </div>
-                  <p className="mt-1 text-[11px] leading-relaxed text-white/54">{reward.description}</p>
+                  <p className="mt-1 text-[11px] leading-relaxed text-[var(--cfc-text-muted)]">{reward.description}</p>
                 </div>
               </button>
             );
           })}
         </div>
 
-        <div className="sticky bottom-0 mt-5 bg-[#130d16] pb-2 pt-2">
+        <div className="sticky bottom-0 mt-5 bg-[rgba(18,12,21,0.96)] pb-1 pt-2">
           <button
             type="button"
-            className="h-12 w-full rounded-2xl bg-white text-sm font-black text-[#170b11] transition active:scale-[0.98]"
+            className="cfc-action-primary w-full"
             onClick={onClose}
           >
             {copy.reward.done}

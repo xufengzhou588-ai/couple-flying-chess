@@ -1,5 +1,5 @@
 import { TaskEventData } from '../types';
-import { getSharedAudioContext, resumeSharedAudioContext } from './audioSession';
+import { resumeSharedAudioContext, unlockSharedAudioContext } from './audioSession';
 
 let lastSpokenAt = 0;
 let activeLocalVoice: AudioBufferSourceNode | null = null;
@@ -9,10 +9,9 @@ const LOCAL_VOICE_VOLUME = 0.9;
 const ENABLE_SYSTEM_TTS_FALLBACK = false;
 const localVoiceBufferCache = new Map<string, Promise<AudioBuffer | null>>();
 
-function playCueTone(kind: TaskEventData['type']) {
-  const context = getSharedAudioContext();
+async function playCueTone(kind: TaskEventData['type']) {
+  const context = await unlockSharedAudioContext();
   if (!context) return;
-  void resumeSharedAudioContext();
 
   const now = context.currentTime;
   const gain = context.createGain();
@@ -23,7 +22,7 @@ function playCueTone(kind: TaskEventData['type']) {
   oscillator.frequency.exponentialRampToValueAtTime(kind === 'collision' ? 660 : 430, now + 0.18);
 
   gain.gain.setValueAtTime(0.0001, now);
-  gain.gain.exponentialRampToValueAtTime(0.09, now + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.14, now + 0.02);
   gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.34);
 
   oscillator.connect(gain);
@@ -45,6 +44,10 @@ const diceLineIds: Record<string, string> = {
   '别急，我们慢慢来。': 'steady',
   '今晚这骰子明显站我这边。': 'hot-streak',
   '今天好运好像一直陪着我。': 'hot-streak',
+  '别眨眼，下一步我就贴上来了。': 'taunt-1',
+  '你再慢一点，我可要亲自来接你了。': 'taunt-2',
+  '追不上我，就先说句好听的。': 'taunt-1',
+  '再慢一点，我可要开始使坏了。': 'taunt-2',
   'That’s how you roll, babe.': 'big-roll',
   'Come on, love. I will wait for you.': 'big-roll',
   'The dice clearly fear my potential.': 'small-roll',
@@ -53,6 +56,10 @@ const diceLineIds: Record<string, string> = {
   'No rush. The fun is catching up.': 'steady',
   'The dice have excellent taste tonight.': 'hot-streak',
   'Looks like luck is being very kind tonight.': 'hot-streak',
+  'Do not blink. I am getting dangerously close.': 'taunt-1',
+  'Keep rolling like that and I might have to come get you.': 'taunt-2',
+  'Catch me first, then maybe I will be nice.': 'taunt-1',
+  'Move slower if you want. I can make waiting interesting.': 'taunt-2',
   'Así se tira el dado, amor.': 'big-roll',
   'Ven, amor. Te espero.': 'big-roll',
   'El dado le teme a mi potencial.': 'small-roll',
@@ -60,7 +67,11 @@ const diceLineIds: Record<string, string> = {
   'Un paso más cerca de lo bueno.': 'steady',
   'Sin prisa. Alcanzarte es parte del juego.': 'steady',
   'El dado tiene muy buen gusto esta noche.': 'hot-streak',
-  'Parece que la suerte me está tratando muy bien.': 'hot-streak'
+  'Parece que la suerte me está tratando muy bien.': 'hot-streak',
+  'No parpadees. Ya me estoy acercando demasiado.': 'taunt-1',
+  'Si sigues así, voy a tener que ir por ti.': 'taunt-2',
+  'Alcánzame primero... y tal vez sea buena contigo.': 'taunt-1',
+  'Ve más lento si quieres. Yo sé hacer divertida la espera.': 'taunt-2'
 };
 
 function genderForPlayer(playerId: number): VoiceGender {
@@ -157,14 +168,9 @@ function moodForTask(taskData: TaskEventData): VoiceMood {
   if (taskData.type === 'trap') return 'trap';
   if (taskData.type === 'collision') return 'collision';
   if (
-    text.includes('private area') ||
-    text.includes('私处') ||
-    text.includes('nipple') ||
-    text.includes('胸尖') ||
-    text.includes('suck') ||
-    text.includes('轻吸') ||
-    text.includes('含住') ||
-    text.includes('私密花园') ||
+    text.includes('最高亲密') ||
+    text.includes('maximum chemistry') ||
+    text.includes('mucha química') ||
     text.includes('after-dark')
   ) {
     return 'bold';
@@ -256,7 +262,7 @@ function lineForTask(taskData: TaskEventData) {
 function voiceScore(voice: SpeechSynthesisVoice, preferredNames: string[], locale: TaskEventData['locale']) {
   const name = voice.name.toLowerCase();
   const lang = voice.lang.toLowerCase();
-  const languagePrefix = locale === 'zh' ? 'zh' : 'en';
+  const languagePrefix = locale === 'zh' ? 'zh' : locale === 'es' ? 'es' : 'en';
 
   if (!lang.startsWith(languagePrefix)) return -1;
 
@@ -316,7 +322,7 @@ function speakLine(line: string, playerId: number, locale: TaskEventData['locale
 }
 
 export function unlockCharacterVoice(locale: TaskEventData['locale']) {
-  void resumeSharedAudioContext();
+  void unlockSharedAudioContext();
   if (!ENABLE_SYSTEM_TTS_FALLBACK || !('speechSynthesis' in window)) return;
 
   window.speechSynthesis.resume();
@@ -327,7 +333,7 @@ export function unlockCharacterVoice(locale: TaskEventData['locale']) {
 }
 
 export function playCharacterVoice(taskData: TaskEventData) {
-  playCueTone(taskData.type);
+  void playCueTone(taskData.type);
   const mood = moodForTask(taskData);
   void playLocalVoiceClip(
     taskData.locale,
@@ -342,7 +348,7 @@ export function playCharacterVoice(taskData: TaskEventData) {
 
 export function playDiceReactionVoice(line: string, playerId: number, locale: TaskEventData['locale']) {
   if (locale === 'zh') {
-    playCueTone('lucky');
+    void playCueTone('lucky');
   }
   const clipId = diceLineIds[line] ? `dice-${diceLineIds[line]}` : null;
   if (!clipId) {

@@ -1,7 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, Trash2, Wand2 } from 'lucide-react';
+import { Crown, Plus, Tags, Trash2, Wand2 } from 'lucide-react';
 import { Translation } from '../../i18n';
 import { Theme } from '../../types';
+import {
+  createTaggedTask,
+  parseTaskTag,
+  TRUTH_DARE_THEME_ID,
+  type TruthDareIntensity,
+  type TruthDareKind
+} from '../../utils/themeTaskTags';
 
 interface ThemeEditorModalProps {
   isOpen: boolean;
@@ -15,6 +22,8 @@ interface ThemeEditorModalProps {
 }
 
 const audienceValues: Theme['audience'][] = ['common', 'male', 'female'];
+const truthDareKindValues: TruthDareKind[] = ['truth', 'dare', 'chemistry', 'boundary', 'custom'];
+const truthDareIntensityValues: TruthDareIntensity[] = ['gentle', 'flirty', 'heated', 'finale'];
 
 export function ThemeEditorModal({
   isOpen,
@@ -30,6 +39,8 @@ export function ThemeEditorModal({
   const [desc, setDesc] = useState('');
   const [audience, setAudience] = useState<Theme['audience']>('common');
   const [taskText, setTaskText] = useState('');
+  const [taskKind, setTaskKind] = useState<TruthDareKind>('truth');
+  const [taskIntensity, setTaskIntensity] = useState<TruthDareIntensity>('gentle');
 
   useEffect(() => {
     if (!isOpen || !theme) return;
@@ -37,6 +48,8 @@ export function ThemeEditorModal({
     setDesc(theme.desc);
     setAudience(theme.audience);
     setTaskText('');
+    setTaskKind('truth');
+    setTaskIntensity('gentle');
   }, [isOpen, theme]);
 
   useEffect(() => {
@@ -50,18 +63,57 @@ export function ThemeEditorModal({
 
   if (!isOpen || !theme) return null;
 
+  const isTruthDareTheme = theme.category === 'truth-dare' || theme.id === TRUTH_DARE_THEME_ID;
+  const addCurrentTask = () => {
+    const trimmed = taskText.trim();
+    if (!trimmed) return;
+
+    const nextTask = isTruthDareTheme
+      ? createTaggedTask(
+          copy.truthDare.taskKinds[taskKind],
+          copy.truthDare.intensities[taskIntensity],
+          trimmed
+        )
+      : trimmed;
+
+    onAddTask(theme.id, nextTask);
+    setTaskText('');
+  };
+
+  const addCustomFinalCards = () => {
+    copy.truthDare.customFinalCards.forEach(card => {
+      onAddTask(
+        theme.id,
+        createTaggedTask(
+          copy.truthDare.taskKinds.custom,
+          copy.truthDare.intensities.finale,
+          card
+        )
+      );
+    });
+  };
+
   return (
-    <div className="fixed inset-0 z-[130]">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="absolute inset-x-0 bottom-0 max-h-[88vh] rounded-t-[30px] border-t border-white/12 bg-[#130d16] p-5 shadow-2xl">
-        <div className="mx-auto mb-5 h-1 w-12 rounded-full bg-white/28" />
+    <div className="fixed inset-0 z-[130]" role="dialog" aria-modal="true" aria-label={copy.form.editTheme}>
+      <button type="button" className="cfc-modal-scrim" onClick={onClose} aria-label={copy.form.cancel} />
+      <div className="cfc-sheet absolute inset-x-0 bottom-0">
+        <div className="cfc-sheet-handle" />
         <div className="mb-5 flex items-center justify-between">
           <div>
-            <h3 className="text-xl font-black text-white">{copy.form.editTheme}</h3>
-            <p className="mt-1 text-xs text-white/46">{copy.form.editHint}</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-xl font-black text-white">{copy.form.editTheme}</h3>
+              {theme.access === 'premium' && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-amber-100/20 bg-amber-100/12 px-2.5 py-1 text-[10px] font-black text-amber-100">
+                  <Crown size={12} />
+                  {copy.truthDare.premiumBadge}
+                </span>
+              )}
+            </div>
+            <p className="mt-1 text-xs text-[var(--cfc-text-muted)]">{copy.form.editHint}</p>
           </div>
           <button
-            className="h-10 rounded-2xl bg-white px-4 text-sm font-black text-[#14070d] transition active:scale-[0.98] disabled:opacity-40"
+            type="button"
+            className="cfc-action-primary h-10 rounded-2xl px-4 text-sm"
             disabled={!canSave}
             onClick={() => {
               onSaveMeta(theme.id, { name: name.trim(), desc: desc.trim(), audience });
@@ -72,38 +124,36 @@ export function ThemeEditorModal({
           </button>
         </div>
 
-        <div className="max-h-[70vh] space-y-4 overflow-y-auto pb-8 no-scrollbar">
+        <div className="cfc-modal-scroll max-h-[70vh] space-y-4">
           <label className="block space-y-2">
-            <span className="text-xs font-semibold text-white/52">{copy.form.themeName}</span>
+            <span className="cfc-field-label">{copy.form.themeName}</span>
             <input
               value={name}
               onChange={e => setName(e.target.value)}
-              className="h-12 w-full rounded-2xl border border-white/10 bg-white/[0.07] px-4 text-white outline-none focus:border-rose-200/40"
+              className="cfc-input"
               maxLength={24}
             />
           </label>
 
           <label className="block space-y-2">
-            <span className="text-xs font-semibold text-white/52">{copy.form.desc}</span>
+            <span className="cfc-field-label">{copy.form.desc}</span>
             <input
               value={desc}
               onChange={e => setDesc(e.target.value)}
-              className="h-12 w-full rounded-2xl border border-white/10 bg-white/[0.07] px-4 text-white outline-none focus:border-rose-200/40"
+              className="cfc-input"
               maxLength={60}
             />
           </label>
 
           <div className="space-y-2">
-            <div className="text-xs font-semibold text-white/52">{copy.form.audience}</div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="cfc-field-label">{copy.form.audience}</div>
+            <div className="cfc-segment grid-cols-3">
               {audienceValues.map(value => (
                 <button
                   key={value}
-                  className={`h-11 rounded-2xl border text-sm font-black transition active:scale-[0.98] ${
-                    audience === value
-                      ? 'border-white bg-white text-[#14070d]'
-                      : 'border-white/10 bg-white/[0.07] text-white/68'
-                  }`}
+                  type="button"
+                  className="cfc-segment-button"
+                  data-active={audience === value}
                   onClick={() => setAudience(value)}
                 >
                   {copy.audience[value]}
@@ -112,31 +162,87 @@ export function ThemeEditorModal({
             </div>
           </div>
 
+          {isTruthDareTheme && (
+            <div className="rounded-[22px] border border-amber-100/18 bg-amber-100/10 p-4">
+              <div className="mb-2 flex items-center gap-2 text-sm font-black text-amber-100">
+                <Tags size={16} />
+                {copy.truthDare.categoryBadge}
+              </div>
+              <p className="text-xs leading-relaxed text-white/58">{copy.truthDare.editorHint}</p>
+            </div>
+          )}
+
           <button
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#7dd3fc,#fb7185,#fbbf24)] text-sm font-black text-[#16090f] shadow-[0_18px_46px_rgba(251,113,133,0.24)] transition active:scale-[0.98]"
+            type="button"
+            className="cfc-action-primary w-full"
             onClick={() => onOpenAiImport(theme.id)}
           >
             <Wand2 size={18} />
             {copy.form.aiGenerate}
           </button>
 
+          {isTruthDareTheme && (
+            <div className="cfc-info-card space-y-3 rounded-[22px] p-3">
+              <div className="space-y-2">
+                <div className="cfc-field-label">{copy.truthDare.kindLabel}</div>
+                <div className="cfc-segment grid-cols-3">
+                  {truthDareKindValues.map(value => (
+                    <button
+                      key={value}
+                      type="button"
+                      className="cfc-segment-button text-[11px]"
+                      data-active={taskKind === value}
+                      onClick={() => setTaskKind(value)}
+                    >
+                      {copy.truthDare.taskKinds[value]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="cfc-field-label">{copy.truthDare.intensityLabel}</div>
+                <div className="cfc-segment grid-cols-4">
+                  {truthDareIntensityValues.map(value => (
+                    <button
+                      key={value}
+                      type="button"
+                      className="cfc-segment-button px-1 text-[11px]"
+                      data-active={taskIntensity === value}
+                      onClick={() => setTaskIntensity(value)}
+                    >
+                      {copy.truthDare.intensities[value]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className="cfc-action-secondary h-11 w-full border-amber-100/20 bg-amber-100/12 text-xs text-amber-100"
+                onClick={addCustomFinalCards}
+              >
+                <Plus size={15} />
+                {copy.truthDare.addCustomFinal}
+              </button>
+            </div>
+          )}
+
           <div className="space-y-2">
-            <div className="text-xs font-semibold text-white/52">{copy.form.addTask}</div>
+            <div className="cfc-field-label">{copy.form.addTask}</div>
             <div className="flex gap-2">
               <input
                 value={taskText}
                 onChange={e => setTaskText(e.target.value)}
-                className="h-12 min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/[0.07] px-4 text-white outline-none focus:border-rose-200/40"
+                className="cfc-input min-w-0 flex-1"
                 placeholder={copy.form.taskPlaceholder}
-                maxLength={80}
+                maxLength={isTruthDareTheme ? 120 : 80}
               />
               <button
-                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-[#14070d] transition active:scale-[0.98] disabled:opacity-40"
+                type="button"
+                className="cfc-action-primary h-12 w-12 shrink-0 rounded-2xl p-0"
                 disabled={!taskText.trim()}
-                onClick={() => {
-                  onAddTask(theme.id, taskText);
-                  setTaskText('');
-                }}
+                onClick={addCurrentTask}
                 aria-label={copy.form.addTaskAria}
               >
                 <Plus size={20} />
@@ -146,32 +252,53 @@ export function ThemeEditorModal({
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <div className="text-xs font-semibold text-white/52">{copy.form.taskList}</div>
-              <div className="text-[11px] font-semibold text-white/38">
+              <div className="cfc-field-label">{copy.form.taskList}</div>
+              <div className="text-[11px] font-semibold text-[var(--cfc-text-subtle)]">
                 {theme.tasks.length} {copy.cardUnit}
               </div>
             </div>
             <div className="space-y-2">
-              {theme.tasks.map((task, idx) => (
-                <div
-                  key={`${theme.id}_${idx}`}
-                  className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.07] p-3"
-                >
-                  <div className="mt-0.5 w-5 text-center text-[11px] font-black text-white/38">
-                    {idx + 1}
-                  </div>
-                  <div className="min-w-0 flex-1 text-sm leading-relaxed text-white/86">{task}</div>
-                  <button
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-black/24 text-rose-200 transition active:scale-95"
-                    onClick={() => onRemoveTask(theme.id, idx)}
-                    aria-label={copy.form.deleteTaskAria}
+              {theme.tasks.map((task, idx) => {
+                const parsedTask = parseTaskTag(task);
+
+                return (
+                  <div
+                    key={`${theme.id}_${idx}`}
+                    className="cfc-info-card flex items-start gap-3 rounded-2xl p-3"
                   >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              ))}
+                    <div className="mt-0.5 w-5 text-center text-[11px] font-black text-[var(--cfc-text-subtle)]">
+                      {idx + 1}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      {(parsedTask.kindLabel || parsedTask.intensityLabel) && (
+                        <div className="mb-1 flex flex-wrap gap-1.5">
+                          {parsedTask.kindLabel && (
+                            <span className="rounded-full bg-rose-100/14 px-2 py-0.5 text-[10px] font-black text-rose-100">
+                              {parsedTask.kindLabel}
+                            </span>
+                          )}
+                          {parsedTask.intensityLabel && (
+                            <span className="rounded-full bg-amber-100/14 px-2 py-0.5 text-[10px] font-black text-amber-100">
+                              {parsedTask.intensityLabel}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      <div className="text-sm leading-relaxed text-white/86">{parsedTask.text}</div>
+                    </div>
+                    <button
+                      type="button"
+                      className="cfc-action-danger flex h-9 w-9 shrink-0 items-center justify-center rounded-xl p-0"
+                      onClick={() => onRemoveTask(theme.id, idx)}
+                      aria-label={copy.form.deleteTaskAria}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                );
+              })}
               {theme.tasks.length === 0 && (
-                <div className="rounded-2xl border border-white/10 bg-white/[0.07] p-4 text-sm text-white/48">
+                <div className="cfc-info-card rounded-2xl p-4 text-sm text-[var(--cfc-text-muted)]">
                   {copy.form.emptyTasks}
                 </div>
               )}

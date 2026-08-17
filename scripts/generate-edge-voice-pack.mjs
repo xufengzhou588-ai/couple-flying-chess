@@ -3,6 +3,9 @@ import { dirname, join } from 'node:path';
 import { spawn } from 'node:child_process';
 
 const scope = process.env.VOICE_PACK_SCOPE || 'zh';
+const clipFilter = process.env.VOICE_PACK_CLIPS
+  ? new Set(process.env.VOICE_PACK_CLIPS.split(',').map(item => item.trim()).filter(Boolean))
+  : null;
 
 const voiceConfig = {
   'zh:female': {
@@ -14,6 +17,26 @@ const voiceConfig = {
     voice: 'zh-CN-YunxiNeural',
     rate: '-5%',
     pitch: '-1Hz'
+  },
+  'en:female': {
+    voice: 'en-US-JennyNeural',
+    rate: '-5%',
+    pitch: '-1Hz'
+  },
+  'en:male': {
+    voice: 'en-US-GuyNeural',
+    rate: '-4%',
+    pitch: '-2Hz'
+  },
+  'es:female': {
+    voice: 'es-US-PalomaNeural',
+    rate: '-5%',
+    pitch: '-1Hz'
+  },
+  'es:male': {
+    voice: 'es-US-AlonsoNeural',
+    rate: '-4%',
+    pitch: '-2Hz'
   }
 };
 
@@ -27,7 +50,9 @@ const lines = {
     'dice-big-roll': '这手气，今晚稳了。',
     'dice-small-roll': '骰子可能嫉妒我的实力。',
     'dice-steady': '距离奖励又近了一点。',
-    'dice-hot-streak': '今晚这骰子明显站我这边。'
+    'dice-hot-streak': '今晚这骰子明显站我这边。',
+    'dice-taunt-1': '别眨眼，下一步我就贴上来了。',
+    'dice-taunt-2': '你再慢一点，我可要亲自来接你了。'
   },
   'zh:female': {
     'task-trap': '这张有点坏，不过我陪你。',
@@ -38,12 +63,33 @@ const lines = {
     'dice-big-roll': '我先往前一点，你慢慢跟上来。',
     'dice-small-roll': '没关系，慢一点也很好玩。',
     'dice-steady': '别急，我们慢慢来。',
-    'dice-hot-streak': '今天好运好像一直陪着我。'
+    'dice-hot-streak': '今天好运好像一直陪着我。',
+    'dice-taunt-1': '追不上我，就先说句好听的。',
+    'dice-taunt-2': '再慢一点，我可要开始使坏了。'
+  },
+  'en:male': {
+    'dice-taunt-1': 'Do not blink. I am getting dangerously close.',
+    'dice-taunt-2': 'Keep rolling like that and I might have to come get you.'
+  },
+  'en:female': {
+    'dice-taunt-1': 'Catch me first, then maybe I will be nice.',
+    'dice-taunt-2': 'Move slower if you want. I can make waiting interesting.'
+  },
+  'es:male': {
+    'dice-taunt-1': 'No parpadees. Ya me estoy acercando demasiado.',
+    'dice-taunt-2': 'Si sigues así, voy a tener que ir por ti.'
+  },
+  'es:female': {
+    'dice-taunt-1': 'Alcánzame primero... y tal vez sea buena contigo.',
+    'dice-taunt-2': 'Ve más lento si quieres. Yo sé hacer divertida la espera.'
   }
 };
 
 function parseScopes(value) {
   if (value === 'zh') return ['zh:female', 'zh:male'];
+  if (value === 'en') return ['en:female', 'en:male'];
+  if (value === 'es') return ['es:female', 'es:male'];
+  if (value === 'all') return Object.keys(lines);
   return value.split(',').map(item => item.trim()).filter(Boolean);
 }
 
@@ -69,6 +115,7 @@ for (const item of parseScopes(scope)) {
   const config = voiceConfig[item];
 
   for (const [clipId, text] of Object.entries(lines[item])) {
+    if (clipFilter && !clipFilter.has(clipId)) continue;
     const outputPath = join('public', 'audio', 'voice', locale, gender, `${clipId}.mp3`);
     await mkdir(dirname(outputPath), { recursive: true });
     await run('python3', [

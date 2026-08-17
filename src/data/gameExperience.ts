@@ -201,91 +201,120 @@ export function getFinalRewards(locale: Locale) {
   return rewards[locale];
 }
 
+const DICE_TAUNT_CHANCE = 0.38;
+const diceTauntLines = {
+  zh: {
+    male: ['别眨眼，下一步我就贴上来了。', '你再慢一点，我可要亲自来接你了。'],
+    female: ['追不上我，就先说句好听的。', '再慢一点，我可要开始使坏了。']
+  },
+  en: {
+    male: ['Do not blink. I am getting dangerously close.', 'Keep rolling like that and I might have to come get you.'],
+    female: ['Catch me first, then maybe I will be nice.', 'Move slower if you want. I can make waiting interesting.']
+  },
+  es: {
+    male: ['No parpadees. Ya me estoy acercando demasiado.', 'Si sigues así, voy a tener que ir por ti.'],
+    female: ['Alcánzame primero... y tal vez sea buena contigo.', 'Ve más lento si quieres. Yo sé hacer divertida la espera.']
+  }
+} satisfies Record<Locale, Record<'male' | 'female', string[]>>;
+
+function withDiceTaunt(reaction: DiceReactionData, locale: Locale, isMale: boolean): DiceReactionData {
+  if (Math.random() > DICE_TAUNT_CHANCE) return reaction;
+
+  const persona = isMale ? 'male' : 'female';
+  const lines = diceTauntLines[locale][persona];
+  const line = lines[Math.floor(Math.random() * lines.length)];
+
+  return {
+    ...reaction,
+    tauntLine: line
+  };
+}
+
 export function getDiceReaction(locale: Locale, playerId: number, result: number): DiceReactionData {
   const isMale = playerId === 0;
   const mood = result === 4 ? 'heart' : result === 1 ? 'spicy' : 'tease';
 
   if (locale === 'zh') {
     if (result === 4) {
-      return {
+      return withDiceTaunt({
         playerId,
         result,
         mood,
         title: '漂亮！',
         line: isMale ? '这手气，今晚稳了。' : '我先往前一点，你慢慢跟上来。'
-      };
+      }, locale, isMale);
     }
     if (result === 1) {
-      return {
+      return withDiceTaunt({
         playerId,
         result,
         mood,
         title: '就一点？',
         line: isMale ? '骰子可能嫉妒我的实力。' : '没关系，慢一点也很好玩。'
-      };
+      }, locale, isMale);
     }
-    return {
+    return withDiceTaunt({
       playerId,
       result,
       mood,
       title: result === 3 ? '不错哦' : '慢慢来',
       line: isMale ? '距离奖励又近了一点。' : '别急，我们慢慢来。'
-    };
+    }, locale, isMale);
   }
 
   if (locale === 'es') {
     if (result === 4) {
-      return {
+      return withDiceTaunt({
         playerId,
         result,
         mood,
         title: '¡Gran jugada!',
         line: isMale ? 'Así se tira el dado, amor.' : 'Ven, amor. Te espero.'
-      };
+      }, locale, isMale);
     }
     if (result === 1) {
-      return {
+      return withDiceTaunt({
         playerId,
         result,
         mood,
         title: '¿Solo uno?',
         line: isMale ? 'El dado le teme a mi potencial.' : 'Está bien. Ir lento también tiene encanto.'
-      };
+      }, locale, isMale);
     }
-    return {
+    return withDiceTaunt({
       playerId,
       result,
       mood,
       title: result === 3 ? 'Nada mal' : 'Fuego lento',
       line: isMale ? 'Un paso más cerca de lo bueno.' : 'Sin prisa. Alcanzarte es parte del juego.'
-    };
+    }, locale, isMale);
   }
 
   if (result === 4) {
-    return {
+    return withDiceTaunt({
       playerId,
       result,
       mood,
       title: 'Big move!',
       line: isMale ? 'That’s how you roll, babe.' : 'Come on, love. I will wait for you.'
-    };
+    }, locale, isMale);
   }
   if (result === 1) {
-    return {
+    return withDiceTaunt({
       playerId,
       result,
       mood,
       title: 'One. Seriously?',
       line: isMale ? 'The dice clearly fear my potential.' : 'It is okay. Slow can be sweet too.'
-    };
+    }, locale, isMale);
   }
-  return {
+  return withDiceTaunt({
     playerId,
     result,
     mood,
     title: result === 3 ? 'Not bad' : 'Slow burn',
     line: isMale ? 'One step closer to the good part.' : 'No rush. The fun is catching up.'
-  };
+  }, locale, isMale);
 }
 
 export function getHotStreakReaction(
@@ -296,17 +325,17 @@ export function getHotStreakReaction(
   const isMale = playerId === 0;
 
   if (locale === 'zh') {
-    return {
+    return withDiceTaunt({
       playerId,
       result: 4,
       mood: 'heart',
       title: `${streak} 连高点，手气发烫`,
       line: isMale ? '今晚这骰子明显站我这边。' : '今天好运好像一直陪着我。'
-    };
+    }, locale, isMale);
   }
 
   if (locale === 'es') {
-    return {
+    return withDiceTaunt({
       playerId,
       result: 4,
       mood: 'heart',
@@ -314,10 +343,10 @@ export function getHotStreakReaction(
       line: isMale
         ? 'El dado tiene muy buen gusto esta noche.'
         : 'Parece que la suerte me está tratando muy bien.'
-    };
+    }, locale, isMale);
   }
 
-  return {
+  return withDiceTaunt({
     playerId,
     result: 4,
     mood: 'heart',
@@ -325,7 +354,7 @@ export function getHotStreakReaction(
     line: isMale
       ? 'The dice have excellent taste tonight.'
       : 'Looks like luck is being very kind tonight.'
-  };
+  }, locale, isMale);
 }
 
 export function getMilestoneEvent(locale: Locale, threshold: 25 | 50 | 75): MilestoneEventData {

@@ -42,7 +42,7 @@ Rules:
 3. Match the deck name's heat level. Keep lower levels cute; allow direct adult intimacy only when the deck clearly signals a high level.
 4. Assume both players are consenting adults. Every dare must allow an immediate pause, softer version, or pass.
 5. Each dare must be a specific, doable action in 8 to 24 words.
-6. Avoid clinical wording, porn-style narration, coercion, humiliation, and gender stereotypes.
+6. Avoid clinical wording, graphic narration, coercion, humiliation, and gender stereotypes.
 7. Include some prop-based mini games such as blindfold touch guessing with feather, ice, warm towel, chocolate, or fingertips.
 8. Do not number items, use Markdown, or add explanations.
 
@@ -68,19 +68,20 @@ Only output JSON:
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[140]">
-      <div className="absolute inset-0 bg-black/72 backdrop-blur-sm" onClick={onClose} />
-      <div className="absolute inset-x-0 bottom-0 max-h-[88vh] rounded-t-[30px] border-t border-white/12 bg-[#130d16] p-5 shadow-2xl">
-        <div className="mx-auto mb-5 h-1 w-12 rounded-full bg-white/28" />
+    <div className="fixed inset-0 z-[140]" role="dialog" aria-modal="true" aria-label={copy.ai.title}>
+      <button type="button" className="cfc-modal-scrim" onClick={onClose} aria-label={copy.form.cancel} />
+      <div className="cfc-sheet absolute inset-x-0 bottom-0">
+        <div className="cfc-sheet-handle" />
 
         <div className="mb-5 flex items-center justify-between gap-3">
           <div>
             <h3 className="text-xl font-black text-white">{copy.ai.title}</h3>
-            <p className="mt-1 text-xs text-white/46">{copy.ai.subtitle}</p>
+            <p className="mt-1 text-xs text-[var(--cfc-text-muted)]">{copy.ai.subtitle}</p>
           </div>
           <button
-            className={`h-10 shrink-0 rounded-2xl px-4 text-sm font-black transition active:scale-[0.98] ${
-              copied ? 'bg-emerald-300 text-[#04140d]' : 'bg-white text-[#14070d]'
+            type="button"
+            className={`cfc-action-primary h-10 shrink-0 rounded-2xl px-4 text-sm ${
+              copied ? 'bg-[var(--cfc-mint)] text-[#04140d]' : ''
             }`}
             onClick={async () => {
               try {
@@ -96,37 +97,35 @@ Only output JSON:
           </button>
         </div>
 
-        <div className="max-h-[70vh] space-y-4 overflow-y-auto pb-8 no-scrollbar">
+        <div className="cfc-modal-scroll max-h-[70vh] space-y-4">
           <label className="block space-y-2">
-            <span className="text-xs font-semibold text-white/52">{copy.ai.promptLabel}</span>
+            <span className="cfc-field-label">{copy.ai.promptLabel}</span>
             <textarea
               value={prompt}
               readOnly
-              className="h-36 w-full resize-none rounded-2xl border border-white/10 bg-white/[0.07] p-4 text-sm leading-relaxed text-white/74 outline-none"
+              className="cfc-textarea h-36 text-sm text-white/74"
             />
           </label>
 
           <label className="block space-y-2">
-            <span className="text-xs font-semibold text-white/52">{copy.ai.pasteLabel}</span>
+            <span className="cfc-field-label">{copy.ai.pasteLabel}</span>
             <textarea
               value={jsonText}
               onChange={e => setJsonText(e.target.value)}
-              className="h-40 w-full resize-none rounded-2xl border border-white/10 bg-white/[0.07] p-4 text-sm leading-relaxed text-white outline-none focus:border-rose-200/40"
+              className="cfc-textarea h-40 text-sm"
               placeholder={copy.ai.placeholder}
             />
           </label>
 
           <div className="space-y-2">
-            <div className="text-xs font-semibold text-white/52">{copy.ai.importMode}</div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="cfc-field-label">{copy.ai.importMode}</div>
+            <div className="cfc-segment grid-cols-2">
               {(['append', 'replace'] as const).map(value => (
                 <button
                   key={value}
-                  className={`h-11 rounded-2xl border text-sm font-black transition active:scale-[0.98] ${
-                    mode === value
-                      ? 'border-white bg-white text-[#14070d]'
-                      : 'border-white/10 bg-white/[0.07] text-white/68'
-                  }`}
+                  type="button"
+                  className="cfc-segment-button"
+                  data-active={mode === value}
                   onClick={() => setMode(value)}
                 >
                   {value === 'append' ? copy.ai.append : copy.ai.replace}
@@ -139,13 +138,15 @@ Only output JSON:
 
           <div className="flex gap-3 pt-1">
             <button
-              className="h-12 flex-1 rounded-2xl bg-white/10 text-sm font-black text-white/76 transition active:scale-[0.98]"
+              type="button"
+              className="cfc-action-secondary flex-1"
               onClick={onClose}
             >
               {copy.form.cancel}
             </button>
             <button
-              className="h-12 flex-1 rounded-2xl bg-white text-sm font-black text-[#14070d] transition active:scale-[0.98]"
+              type="button"
+              className="cfc-action-primary flex-1"
               onClick={() => {
                 setError('');
                 const raw = jsonText.trim();

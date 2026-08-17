@@ -1,3 +1,4 @@
 User-agent: *
 Allow: /
 Sitemap: https://cpfly.top/sitemap.xml
+Sitemap: https://couple-flight-chess.netlify.app/sitemap.xml

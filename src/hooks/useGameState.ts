@@ -1,10 +1,19 @@
 import { useCallback, useEffect, useState } from 'react';
-import { FinalRewardId, GameState, Locale, Player, TaskEventData, Theme } from '../types';
+import {
+  DiceRollEvent,
+  FinalRewardId,
+  GameState,
+  Locale,
+  Player,
+  TaskEventData,
+  Theme
+} from '../types';
 import { loadFromStorage, saveToStorage } from '../utils/localStorage';
 import { calculateNewPosition, generateBoardMap, generateSpiralPath } from '../utils/gameLogic';
 import { DEFAULT_THEMES, getDefaultThemes } from '../data/defaultThemes';
 import { t } from '../i18n';
 import { getDefaultFinalRewardIds } from '../data/gameExperience';
+import { isFinaleTask } from '../utils/themeTaskTags';
 
 const STORAGE_KEY = 'couple-flying-chess-v3';
 const DEFAULT_THEME_IDS = new Set(DEFAULT_THEMES.map(theme => theme.id));
@@ -72,6 +81,8 @@ function normalizeThemes(input: unknown, locale: Locale): Theme[] {
             .filter((task): task is string => task.length > 0)
         : [];
       const audienceValue = record.audience;
+      const accessValue = record.access;
+      const categoryValue = record.category;
 
       return {
         id: typeof record.id === 'string' ? record.id : `theme_${Date.now()}`,
@@ -81,6 +92,8 @@ function normalizeThemes(input: unknown, locale: Locale): Theme[] {
           audienceValue === 'common' || audienceValue === 'male' || audienceValue === 'female'
             ? audienceValue
             : 'common',
+        access: accessValue === 'premium' ? 'premium' : 'free',
+        category: categoryValue === 'truth-dare' ? 'truth-dare' : 'classic',
         tasks
       } satisfies Theme;
     })
@@ -88,6 +101,48 @@ function normalizeThemes(input: unknown, locale: Locale): Theme[] {
       if (!acc.some(item => item.id === theme.id)) acc.push(theme);
       return acc;
     }, []);
+}
+
+function normalizeTaskEvent(input: unknown): TaskEventData | null {
+  if (!isRecord(input)) return null;
+  if (input.type !== 'collision' && input.type !== 'lucky' && input.type !== 'trap') return null;
+  if (input.locale !== 'zh' && input.locale !== 'en' && input.locale !== 'es') return null;
+  if (input.initiatorPlayerId !== 0 && input.initiatorPlayerId !== 1) return null;
+  if (input.executorPlayerId !== 0 && input.executorPlayerId !== 1) return null;
+
+  const textFields = ['title', 'subtitle', 'icon', 'color', 'task', 'taskSourceId'] as const;
+  if (textFields.some(field => typeof input[field] !== 'string')) return null;
+
+  return {
+    type: input.type,
+    locale: input.locale,
+    initiatorPlayerId: input.initiatorPlayerId,
+    executorPlayerId: input.executorPlayerId,
+    title: input.title as string,
+    subtitle: input.subtitle as string,
+    icon: input.icon as string,
+    color: input.color as string,
+    task: input.task as string,
+    taskSourceId: input.taskSourceId as string,
+    bonusSeconds:
+      typeof input.bonusSeconds === 'number'
+        ? Math.max(0, Math.min(60, Math.round(input.bonusSeconds)))
+        : undefined
+  };
+}
+
+function normalizeDiceRoll(input: unknown): DiceRollEvent | null {
+  if (!isRecord(input)) return null;
+  if (typeof input.id !== 'string' || input.id.length === 0) return null;
+  if (input.playerId !== 0 && input.playerId !== 1) return null;
+  if (typeof input.result !== 'number' || input.result < 1 || input.result > 6) return null;
+
+  return {
+    id: input.id,
+    playerId: input.playerId,
+    result: Math.round(input.result),
+    createdAt: typeof input.createdAt === 'number' ? input.createdAt : Date.now()
+  };
 }
 
 function applyDefaultThemeLocale(themes: Theme[], locale: Locale) {
@@ -127,11 +182,14 @@ function normalizeGameState(saved: unknown): GameState | null {
     turn: saved.turn === 0 || saved.turn === 1 ? saved.turn : 0,
     players,
     themes,
-    boardMap: Array.isArray(saved.boardMap) ? saved.boardMap : generateBoardMap(),
+    boardMap: generateBoardMap(),
     pathCoords: Array.isArray(saved.pathCoords) ? saved.pathCoords : generateSpiralPath(),
     isRolling: !!saved.isRolling,
     finalRewardIds:
-      savedRewardIds.length >= 3 ? Array.from(new Set(savedRewardIds)).slice(0, 5) : getDefaultFinalRewardIds()
+      savedRewardIds.length >= 3 ? Array.from(new Set(savedRewardIds)).slice(0, 5) : getDefaultFinalRewardIds(),
+    activeTask: normalizeTaskEvent(saved.activeTask),
+    winnerId: saved.winnerId === 0 || saved.winnerId === 1 ? saved.winnerId : null,
+    lastDiceRoll: normalizeDiceRoll(saved.lastDiceRoll)
   };
 }
 
@@ -148,9 +206,24 @@ function createThemeId(existingIds: Set<string>) {
   return id;
 }
 
-function randomTask(theme: Theme | undefined, locale: Locale) {
+function randomTask(theme: Theme | undefined, locale: Locale, landingStep: number) {
   if (!theme || theme.tasks.length === 0) return t[locale].fallbackTask;
-  return theme.tasks[Math.floor(Math.random() * theme.tasks.length)];
+
+  if (theme.category !== 'truth-dare') {
+    return theme.tasks[Math.floor(Math.random() * theme.tasks.length)];
+  }
+
+  const finaleTasks = theme.tasks.filter(isFinaleTask);
+  const regularTasks = theme.tasks.filter(task => !isFinaleTask(task));
+  const finaleChance = landingStep >= 40 ? 0.65 : landingStep >= 32 ? 0.25 : 0;
+  const pool =
+    finaleTasks.length > 0 && Math.random() < finaleChance
+      ? finaleTasks
+      : regularTasks.length > 0
+        ? regularTasks
+        : theme.tasks;
+
+  return pool[Math.floor(Math.random() * pool.length)];
 }
 
 export function useGameState() {
@@ -167,7 +240,10 @@ export function useGameState() {
         boardMap: generateBoardMap(),
         pathCoords: generateSpiralPath(),
         isRolling: false,
-        finalRewardIds: getDefaultFinalRewardIds()
+        finalRewardIds: getDefaultFinalRewardIds(),
+        activeTask: null,
+        winnerId: null,
+        lastDiceRoll: null
       }
     );
   });
@@ -221,7 +297,7 @@ export function useGameState() {
 
         return {
           ...prev,
-          themes: [...prev.themes, { id, name, desc, audience: input.audience, tasks: [] }]
+          themes: [...prev.themes, { id, name, desc, audience: input.audience, access: 'free', category: 'classic', tasks: [] }]
         };
       });
 
@@ -308,7 +384,11 @@ export function useGameState() {
       view: 'game',
       turn: Math.random() < 0.5 ? 0 : 1,
       players: prev.players.map(player => ({ ...player, step: 0 })),
-      boardMap: generateBoardMap()
+      boardMap: generateBoardMap(),
+      isRolling: false,
+      activeTask: null,
+      winnerId: null,
+      lastDiceRoll: null
     }));
     return true;
   }, [state.players, state.themes]);
@@ -335,6 +415,52 @@ export function useGameState() {
     setState(prev => ({ ...prev, isRolling: rolling }));
   }, []);
 
+  const recordDiceRoll = useCallback((playerId: number, result: number) => {
+    const id =
+      typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+
+    setState(prev => ({
+      ...prev,
+      lastDiceRoll: { id, playerId, result, createdAt: Date.now() }
+    }));
+  }, []);
+
+  const setActiveTask = useCallback((task: TaskEventData | null) => {
+    setState(prev => ({ ...prev, activeTask: task }));
+  }, []);
+
+  const setWinner = useCallback((winnerId: number | null) => {
+    setState(prev => ({ ...prev, winnerId }));
+  }, []);
+
+  const applyRemoteState = useCallback((remoteState: GameState) => {
+    const normalized = normalizeGameState(remoteState);
+    if (!normalized) return;
+    setState(prev => {
+      const locale = prev.locale;
+      const remoteThemeIds = new Set(normalized.themes.map(theme => theme.id));
+      const localCustomThemes = prev.themes.filter(
+        theme => !DEFAULT_THEME_IDS.has(theme.id) && !remoteThemeIds.has(theme.id)
+      );
+      const themes = applyDefaultThemeLocale(
+        [...normalized.themes, ...localCustomThemes],
+        locale
+      );
+
+      return {
+        ...normalized,
+        locale,
+        themes,
+        players: normalized.players.map(player => ({
+          ...player,
+          name: player.id === 0 ? t[locale].playerBlue : t[locale].playerRed
+        }))
+      };
+    });
+  }, []);
+
   const checkTile = useCallback(
     (landingStep: number): TaskEventData | 'win' | null => {
       const copy = t[state.locale];
@@ -355,7 +481,7 @@ export function useGameState() {
           subtitle: `${copy.taskFrom} ${copy.themeQuoteOpen}${theme?.name || copy.mysteryTheme}${copy.themeQuoteClose}`,
           icon: 'handshake',
           color: 'text-amber-300',
-          task: randomTask(theme, state.locale),
+          task: randomTask(theme, state.locale, landingStep),
           taskSourceId: activePlayer.themeId || ''
         };
       }
@@ -374,7 +500,7 @@ export function useGameState() {
           subtitle: `${copy.taskFrom} ${copy.themeQuoteOpen}${theme?.name || copy.mysteryTheme}${copy.themeQuoteClose}`,
           icon: 'favorite',
           color: 'text-rose-300',
-          task: randomTask(theme, state.locale),
+          task: randomTask(theme, state.locale, landingStep),
           taskSourceId: activePlayer.themeId || ''
         };
       }
@@ -391,7 +517,7 @@ export function useGameState() {
           subtitle: `${copy.taskFrom} ${copy.themeQuoteOpen}${theme?.name || copy.mysteryTheme}${copy.themeQuoteClose}`,
           icon: 'lock',
           color: 'text-fuchsia-300',
-          task: randomTask(theme, state.locale),
+          task: randomTask(theme, state.locale, landingStep),
           taskSourceId: opponent.themeId || ''
         };
       }
@@ -418,7 +544,8 @@ export function useGameState() {
         ...prev,
         players: nextPlayers,
         turn: prev.turn === 0 ? 1 : 0,
-        isRolling: false
+        isRolling: false,
+        activeTask: null
       };
     });
   }, []);
@@ -435,7 +562,10 @@ export function useGameState() {
       })),
       boardMap: generateBoardMap(),
       pathCoords: generateSpiralPath(),
-      isRolling: false
+      isRolling: false,
+      activeTask: null,
+      winnerId: null,
+      lastDiceRoll: null
     }));
   }, []);
 
@@ -454,6 +584,10 @@ export function useGameState() {
     movePlayer,
     endTurn,
     setIsRolling,
+    recordDiceRoll,
+    setActiveTask,
+    setWinner,
+    applyRemoteState,
     checkTile,
     resolveTask,
     resetGame

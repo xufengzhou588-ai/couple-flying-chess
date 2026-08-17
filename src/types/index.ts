@@ -12,6 +12,8 @@ export interface Player {
 }
 
 export type ThemeAudience = 'common' | 'male' | 'female';
+export type ThemeAccess = 'free' | 'premium';
+export type ThemeCategory = 'classic' | 'truth-dare';
 export type Locale = 'zh' | 'en' | 'es';
 export type FinalRewardId =
   | 'slow-kiss'
@@ -28,6 +30,8 @@ export interface Theme {
   name: string;
   desc: string;
   audience: ThemeAudience;
+  access?: ThemeAccess;
+  category?: ThemeCategory;
   tasks: string[];
 }
 
@@ -46,6 +50,16 @@ export interface GameState {
   pathCoords: PathCoord[];
   isRolling: boolean;
   finalRewardIds: FinalRewardId[];
+  activeTask: TaskEventData | null;
+  winnerId: number | null;
+  lastDiceRoll: DiceRollEvent | null;
+}
+
+export interface DiceRollEvent {
+  id: string;
+  playerId: number;
+  result: number;
+  createdAt: number;
 }
 
 export interface DiceReactionData {
@@ -54,6 +68,7 @@ export interface DiceReactionData {
   mood: 'heart' | 'tease' | 'spicy';
   title: string;
   line: string;
+  tauntLine?: string;
 }
 
 export interface MilestoneEventData {

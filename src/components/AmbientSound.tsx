@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Volume2, VolumeX } from 'lucide-react';
 import { Translation } from '../i18n';
-import { getSharedAudioContext, resumeSharedAudioContext } from '../utils/audioSession';
+import { getSharedAudioContext, resumeSharedAudioContext, unlockSharedAudioContext } from '../utils/audioSession';
 
 type AmbientNodes = {
   context: AudioContext;
@@ -221,14 +221,15 @@ export function AmbientSound({ copy, inGame = false }: { copy: Translation; inGa
 
   const start = async () => {
     if (nodesRef.current) return;
+    await unlockSharedAudioContext();
     const nodes = createAmbientNodes();
-    await resumeSharedAudioContext();
     nodesRef.current = nodes;
     setEnabled(true);
   };
 
   const button = (
     <button
+      type="button"
       className={`flex h-9 w-9 items-center justify-center rounded-2xl border transition active:scale-95 ${
         inGame ? 'fixed left-4 bottom-[calc(env(safe-area-inset-bottom)+172px)] z-[80] shadow-2xl backdrop-blur-xl' : ''
       } ${

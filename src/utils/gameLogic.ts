@@ -3,6 +3,58 @@ import { TileType, PathCoord } from '../types';
 const GRID_SIZE = 7;
 const TILES_COUNT = 49;
 
+export const FIXED_BOARD_MAP: TileType[] = [
+  'blank',
+  'lucky',
+  'trap',
+  'blank',
+  'lucky',
+  'trap',
+  'lucky',
+  'blank',
+  'trap',
+  'lucky',
+  'blank',
+  'trap',
+  'lucky',
+  'trap',
+  'blank',
+  'lucky',
+  'trap',
+  'lucky',
+  'blank',
+  'trap',
+  'lucky',
+  'blank',
+  'trap',
+  'lucky',
+  'trap',
+  'blank',
+  'lucky',
+  'trap',
+  'blank',
+  'lucky',
+  'trap',
+  'lucky',
+  'blank',
+  'trap',
+  'lucky',
+  'trap',
+  'blank',
+  'lucky',
+  'trap',
+  'blank',
+  'lucky',
+  'trap',
+  'lucky',
+  'blank',
+  'trap',
+  'lucky',
+  'trap',
+  'blank',
+  'blank'
+];
+
 export function generateSpiralPath(): PathCoord[] {
   const path: PathCoord[] = [];
   let r = 0, c = 0, dr = 0, dc = 1;
@@ -32,26 +84,7 @@ export function generateSpiralPath(): PathCoord[] {
 }
 
 export function generateBoardMap(): TileType[] {
-  const boardMap: TileType[] = new Array(TILES_COUNT).fill('blank');
-  
-  const availableIndices = [];
-  for (let i = 1; i < TILES_COUNT - 1; i++) {
-    availableIndices.push(i);
-  }
-
-  for (let i = availableIndices.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [availableIndices[i], availableIndices[j]] = [availableIndices[j], availableIndices[i]];
-  }
-
-  for (let i = 0; i < 19; i++) {
-    boardMap[availableIndices[i]] = 'lucky';
-  }
-  for (let i = 19; i < 38; i++) {
-    boardMap[availableIndices[i]] = 'trap';
-  }
-
-  return boardMap;
+  return [...FIXED_BOARD_MAP];
 }
 
 export function calculateNewPosition(current: number, steps: number): number {

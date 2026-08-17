@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 
 import { Player } from '../types';
+import { assetPath } from '../utils/assets';
 
 type CharacterMood = 'idle' | 'heart' | 'tease' | 'spicy';
 type CharacterSize = 'home' | 'board';
@@ -19,7 +20,7 @@ export function CharacterToken({
   size = 'board'
 }: CharacterTokenProps) {
   const gender = player.id === 0 ? 'boy' : 'girl';
-  const avatarSrc = gender === 'boy' ? '/assets/avatar-boy.png' : '/assets/avatar-girl.png';
+  const avatarSrc = assetPath(gender === 'boy' ? 'assets/avatar-boy.png' : 'assets/avatar-girl.png');
 
   return (
     <div

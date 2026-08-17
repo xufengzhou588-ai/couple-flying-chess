@@ -19,31 +19,35 @@ export function BottomNav({ activeView, copy, canStart, onNavigate, onStartGame 
     onNavigate('home');
   };
 
+  const playLabel = activeView === 'home' && canStart ? copy.startGame : copy.navPlay;
+
   return (
-    <nav className="z-50 flex h-[82px] shrink-0 items-start justify-around border-t border-white/10 bg-[#09070c]/76 pt-3 backdrop-blur-2xl">
+    <nav className="bottom-nav z-50 flex h-[calc(72px+env(safe-area-inset-bottom))] shrink-0 items-start justify-around border-t border-[var(--cfc-border)] bg-[rgba(9,7,12,0.78)] pb-[env(safe-area-inset-bottom)] pt-3 backdrop-blur-2xl">
       <button
-        className={`group flex min-w-20 flex-col items-center gap-1 rounded-2xl px-3 py-1.5 transition ${
+        type="button"
+        className={`cfc-pressable group flex min-w-[128px] flex-col items-center justify-center gap-1 rounded-2xl px-4 py-1.5 ${
           activeView === 'home' || activeView === 'game' ? 'opacity-100' : 'opacity-48'
-        } ${activeView === 'home' && canStart ? 'bg-white text-[#14070d] shadow-[0_12px_34px_rgba(255,255,255,0.18)]' : 'text-white'}`}
+        } ${activeView === 'home' && canStart ? 'bg-[linear-gradient(135deg,var(--cfc-amber),var(--cfc-rose-soft))] text-[#241016] shadow-[0_12px_34px_rgba(255,111,154,0.2)]' : 'text-white'}`}
         onClick={handlePlayClick}
       >
         <GamepadIcon
           className={
             activeView === 'home' && canStart
-              ? 'text-[#14070d]'
+              ? 'text-[#241016]'
               : activeView === 'home' || activeView === 'game'
                 ? 'text-white'
                 : 'text-white/62'
           }
           size={25}
         />
-        <span className={`text-[10px] font-semibold ${activeView === 'home' && canStart ? 'text-[#14070d]' : 'text-white'}`}>
-          {copy.navPlay}
+        <span className={`text-[10px] font-semibold ${activeView === 'home' && canStart ? 'text-[#241016]' : 'text-white'}`}>
+          {playLabel}
         </span>
       </button>
 
       <button
-        className={`group flex w-16 flex-col items-center gap-1 transition ${
+        type="button"
+        className={`cfc-pressable group flex w-16 flex-col items-center justify-center gap-1 rounded-2xl ${
           activeView === 'themes' ? 'opacity-100' : 'opacity-48'
         }`}
         onClick={() => onNavigate('themes')}
