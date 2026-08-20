@@ -5,6 +5,7 @@ Date: 2026-08-20
 ## Build Status
 
 - App name: Couple Flight Chess
+- App Store Connect App ID: `6799199803`
 - Bundle ID: `com.coupleflyingchess.app`
 - Version: `1.0`
 - Build: `1`
