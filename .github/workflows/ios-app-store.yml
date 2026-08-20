@@ -91,6 +91,13 @@ jobs:
             -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID" \
             archive
 
+      - name: Upload XCArchive artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CoupleFlightChess-XCArchive
+          path: ${{ runner.temp }}/CoupleFlightChess.xcarchive
+          if-no-files-found: error
+
       - name: Write export options
         run: |
           cat > "$RUNNER_TEMP/ExportOptions.plist" <<EOF
