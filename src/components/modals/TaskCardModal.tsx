@@ -160,7 +160,7 @@ export function TaskCardModal({
       <div className="cfc-modal-scrim" />
 
       <div
-        className="relative h-[min(560px,calc(100dvh-32px))] w-full max-w-sm perspective-1000"
+        className="task-card-frame relative h-[min(560px,calc(100dvh-32px))]"
         role="dialog"
         aria-modal="true"
         aria-label={taskData.title}
