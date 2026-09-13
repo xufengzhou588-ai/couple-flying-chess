@@ -266,6 +266,32 @@ function App() {
     setMilestoneEvent(null);
   };
 
+  const handleEnterRemoteRoom = () => {
+    if (remoteRole === 'guest') {
+      remoteGuestWaitingForHostRef.current = true;
+      requestRemoteStateRef.current?.();
+      switchView('game');
+      setIsInviteOpen(false);
+      setInviteRoomCode(null);
+      return;
+    }
+
+    if (state.view !== 'game') {
+      if (!startGame()) {
+        showInfo(copy.selectedPrompt);
+        return;
+      }
+      taskBonusSecondsRef.current = 0;
+      setActiveTask(null);
+      setMilestoneEvent(null);
+    } else {
+      switchView('game');
+    }
+
+    setIsInviteOpen(false);
+    setInviteRoomCode(null);
+  };
+
   const handleBackFromGame = () => {
     if (remoteRoomCode && remoteRole === 'guest') {
       showInfo(copy.remote.hostOnlyReset);
@@ -451,6 +477,7 @@ function App() {
         copy={copy}
         onModeChange={setInviteMode}
         onRoomCodeReady={handleRoomCodeReady}
+        onEnterRoom={handleEnterRemoteRoom}
         onClose={() => {
           setIsInviteOpen(false);
           setInviteRoomCode(null);

@@ -3,6 +3,7 @@ import type { IScannerControls } from '@zxing/browser';
 import {
   Camera,
   Copy,
+  Gamepad2,
   Link as LinkIcon,
   Loader2,
   LogIn,
@@ -36,6 +37,7 @@ interface InvitePartnerModalProps {
   copy: Translation;
   onModeChange: (mode: InvitePartnerMode) => void;
   onRoomCodeReady: (roomCode: string, options?: { role?: RemoteRoomRole; waitForHost?: boolean }) => void;
+  onEnterRoom: () => void;
   onClose: () => void;
 }
 
@@ -60,6 +62,7 @@ export function InvitePartnerModal({
   copy,
   onModeChange,
   onRoomCodeReady,
+  onEnterRoom,
   onClose
 }: InvitePartnerModalProps) {
   const [copied, setCopied] = useState(false);
@@ -427,6 +430,22 @@ export function InvitePartnerModal({
                 </div>
               </div>
             ) : null}
+          </div>
+        ) : null}
+
+        {activeRoomCode && remoteConfig.status === 'ready' && syncStatus === 'connected' ? (
+          <div className="mt-3 rounded-[22px] border border-sky-100/18 bg-sky-100/10 p-3">
+            <button
+              type="button"
+              className="cfc-action-primary h-12 w-full"
+              onClick={onEnterRoom}
+            >
+              <Gamepad2 size={17} />
+              {role === 'guest' ? copy.invite.enterRoom : copy.invite.startPrivateGame}
+            </button>
+            <p className="mt-2 text-center text-xs leading-relaxed text-sky-100/72">
+              {copy.invite.enterRoomHint}
+            </p>
           </div>
         ) : null}
 
