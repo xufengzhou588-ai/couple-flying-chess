@@ -3,6 +3,7 @@ import { Check, Crown, Heart, MoonStar, RotateCcw, Sparkles, Zap } from 'lucide-
 import { getFinalRewards, type FinalRewardOption } from '../../data/gameExperience';
 import { Translation } from '../../i18n';
 import { FinalRewardId, Locale } from '../../types';
+import { requestReviewAfterCompletedGame } from '../../utils/appReview';
 import { assetPath } from '../../utils/assets';
 
 interface WinModalProps {
@@ -51,6 +52,7 @@ export function WinModal({
   const restart = () => {
     setSelectedReward(null);
     setVersion(null);
+    void requestReviewAfterCompletedGame();
     onRestart();
   };
 

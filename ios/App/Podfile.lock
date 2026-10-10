@@ -1,22 +1,28 @@
 PODS:
   - Capacitor (7.6.7):
     - CapacitorCordova
+  - CapacitorCommunityInAppReview (7.1.0):
+    - Capacitor
   - CapacitorCordova (7.6.7)
 
 DEPENDENCIES:
   - "Capacitor (from `../../node_modules/@capacitor/ios`)"
+  - "CapacitorCommunityInAppReview (from `../../node_modules/@capacitor-community/in-app-review`)"
   - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
 
 EXTERNAL SOURCES:
   Capacitor:
     :path: "../../node_modules/@capacitor/ios"
+  CapacitorCommunityInAppReview:
+    :path: "../../node_modules/@capacitor-community/in-app-review"
   CapacitorCordova:
     :path: "../../node_modules/@capacitor/ios"
 
 SPEC CHECKSUMS:
   Capacitor: 8ef25ba872436d2c5ac2a4791f7255529bdcd93b
+  CapacitorCommunityInAppReview: 3756d05524c5cf2eccbc8ed460f77f8f8db6c141
   CapacitorCordova: 139e2ed3d91c54b5aeae7941135c9f9aefc6da1d
 
-PODFILE CHECKSUM: 77ddc8b7fd44fb20a0ad123086f6fb48a1e35d11
+PODFILE CHECKSUM: 28e490b4e56f741bbae241a4707573facc11235c
 
 COCOAPODS: 1.17.0
