@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { IScannerControls } from '@zxing/browser';
+import { Capacitor } from '@capacitor/core';
 import {
   Camera,
   Copy,
@@ -78,6 +79,7 @@ export function InvitePartnerModal({
   const scannerControlsRef = useRef<IScannerControls | null>(null);
   const normalizedInitialRoomCode = useMemo(() => normalizeRoomCode(initialRoomCode), [initialRoomCode]);
   const remoteConfig = useMemo(() => getRemoteRoomConfig(), []);
+  const isNativeApp = Capacitor.isNativePlatform();
   const activeRoomCode = mode === 'join' ? joinedRoomCode : inviteRoomCode;
   const channelName = useMemo(
     () => (activeRoomCode ? createRemoteChannelName(activeRoomCode) : ''),
@@ -368,7 +370,17 @@ export function InvitePartnerModal({
               </span>
             </div>
             <div className="mx-auto flex w-full max-w-[210px] items-center justify-center rounded-[22px] bg-[#fff7ed] p-3 shadow-[0_18px_50px_rgba(0,0,0,0.22)]">
-              <img src={qrDataUrl} alt={copy.invite.qrTitle} className="h-full w-full rounded-[14px]" />
+              {isNativeApp ? (
+                <div
+                  role="img"
+                  aria-label={copy.invite.qrTitle}
+                  className="aspect-square w-full rounded-[14px] bg-contain bg-center bg-no-repeat"
+                  style={{ backgroundImage: `url(${qrDataUrl})` }}
+                  onContextMenu={event => event.preventDefault()}
+                />
+              ) : (
+                <img src={qrDataUrl} alt={copy.invite.qrTitle} className="h-full w-full rounded-[14px]" />
+              )}
             </div>
           </div>
         ) : null}
