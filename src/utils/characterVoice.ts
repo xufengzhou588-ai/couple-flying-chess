@@ -1,12 +1,14 @@
 import { TaskEventData } from '../types';
 import { resumeSharedAudioContext, unlockSharedAudioContext } from './audioSession';
+import { assetPath } from './assets';
 
 let lastSpokenAt = 0;
 let activeLocalVoice: AudioBufferSourceNode | null = null;
+let activeMediaVoice: HTMLAudioElement | null = null;
+let voiceRequestId = 0;
 
-const LOCAL_VOICE_FORMATS = ['mp3', 'm4a', 'wav', 'ogg'] as const;
 const LOCAL_VOICE_VOLUME = 0.9;
-const ENABLE_SYSTEM_TTS_FALLBACK = false;
+const ENABLE_SYSTEM_TTS_FALLBACK = true;
 const localVoiceBufferCache = new Map<string, Promise<AudioBuffer | null>>();
 
 async function playCueTone(kind: TaskEventData['type']) {
@@ -79,24 +81,15 @@ function genderForPlayer(playerId: number): VoiceGender {
 }
 
 function localVoiceCandidates(locale: TaskEventData['locale'], gender: VoiceGender, clipId: string) {
-  return LOCAL_VOICE_FORMATS.map(format => `/audio/voice/${locale}/${gender}/${clipId}.${format}`);
+  return [assetPath(`audio/voice/${locale}/${gender}/${clipId}.mp3`)];
 }
 
-async function tryPlayAudioSource(src: string) {
-  if (activeLocalVoice) {
-    try {
-      activeLocalVoice.stop();
-    } catch {
-      // The source may already have ended.
-    }
-    activeLocalVoice = null;
-  }
-
+async function tryPlayAudioSource(src: string, requestId: number) {
   const context = await resumeSharedAudioContext();
   if (!context) return false;
 
   const buffer = await getLocalVoiceBuffer(context, src);
-  if (!buffer) return false;
+  if (!buffer || requestId !== voiceRequestId) return false;
 
   const source = context.createBufferSource();
   const gain = context.createGain();
@@ -120,21 +113,49 @@ async function tryPlayAudioSource(src: string) {
   }
 }
 
+async function tryPlayMediaSource(src: string, requestId: number) {
+  if (requestId !== voiceRequestId) return false;
+  const audio = new Audio(src);
+  audio.volume = LOCAL_VOICE_VOLUME;
+  audio.onended = () => {
+    if (activeMediaVoice === audio) activeMediaVoice = null;
+  };
+
+  try {
+    await audio.play();
+    if (requestId !== voiceRequestId) {
+      audio.pause();
+      return false;
+    }
+    activeMediaVoice = audio;
+    return true;
+  } catch {
+    audio.pause();
+    return false;
+  }
+}
+
 function getLocalVoiceBuffer(context: AudioContext, src: string) {
   const cached = localVoiceBufferCache.get(src);
   if (cached) return cached;
 
   const promise = fetch(src, { cache: 'force-cache' })
     .then(async response => {
-      if (!response.ok) return null;
+      // Capacitor serves media via URLResponse, which can have status 0 in WKWebView.
+      if (!response.ok && response.status !== 0) return null;
 
       const contentType = response.headers.get('content-type') || '';
       if (contentType && !contentType.startsWith('audio/')) return null;
 
       const arrayBuffer = await response.arrayBuffer();
+      if (!arrayBuffer.byteLength) return null;
       return await context.decodeAudioData(arrayBuffer.slice(0));
     })
-    .catch(() => null);
+    .catch(() => null)
+    .then(buffer => {
+      if (!buffer) localVoiceBufferCache.delete(src);
+      return buffer;
+    });
 
   localVoiceBufferCache.set(src, promise);
   return promise;
@@ -148,11 +169,14 @@ async function playLocalVoiceClip(
   const now = Date.now();
   if (now - lastSpokenAt < 900) return true;
 
+  const requestId = ++voiceRequestId;
+  stopActiveLocalVoice();
+
   for (const src of localVoiceCandidates(locale, genderForPlayer(playerId), clipId)) {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
-    const didPlay = await tryPlayAudioSource(src);
+    const didPlay = await tryPlayAudioSource(src, requestId) || await tryPlayMediaSource(src, requestId);
     if (didPlay) {
       lastSpokenAt = now;
       return true;
@@ -160,6 +184,22 @@ async function playLocalVoiceClip(
   }
 
   return false;
+}
+
+function stopActiveLocalVoice() {
+  if (activeLocalVoice) {
+    try {
+      activeLocalVoice.stop();
+    } catch {
+      // The source may already have ended.
+    }
+    activeLocalVoice = null;
+  }
+  if (activeMediaVoice) {
+    activeMediaVoice.pause();
+    activeMediaVoice.currentTime = 0;
+    activeMediaVoice = null;
+  }
 }
 
 function moodForTask(taskData: TaskEventData): VoiceMood {
@@ -287,15 +327,15 @@ function selectBestVoice(
     .sort((a, b) => b.score - a.score)[0]?.voice || null;
 }
 
-function speakLine(line: string, playerId: number, locale: TaskEventData['locale'], didRetry = false) {
-  if (!('speechSynthesis' in window)) return;
+function speakLine(line: string, playerId: number, locale: TaskEventData['locale'], requestId = voiceRequestId, didRetry = false) {
+  if (requestId !== voiceRequestId || !('speechSynthesis' in window)) return;
 
   const now = Date.now();
   if (now - lastSpokenAt < 900) return;
 
   const voices = window.speechSynthesis.getVoices();
   if (!voices.length && !didRetry) {
-    window.setTimeout(() => speakLine(line, playerId, locale, true), 160);
+    window.setTimeout(() => speakLine(line, playerId, locale, requestId, true), 160);
     return;
   }
 
@@ -335,13 +375,15 @@ export function unlockCharacterVoice(locale: TaskEventData['locale']) {
 export function playCharacterVoice(taskData: TaskEventData) {
   void playCueTone(taskData.type);
   const mood = moodForTask(taskData);
-  void playLocalVoiceClip(
+  const voicePromise = playLocalVoiceClip(
     taskData.locale,
     taskData.initiatorPlayerId,
     `task-${mood}`
-  ).then(didPlayLocalVoice => {
-    if (!didPlayLocalVoice && ENABLE_SYSTEM_TTS_FALLBACK) {
-      speakLine(lineForTask(taskData), taskData.initiatorPlayerId, taskData.locale);
+  );
+  const requestId = voiceRequestId;
+  void voicePromise.then(didPlayLocalVoice => {
+    if (!didPlayLocalVoice && ENABLE_SYSTEM_TTS_FALLBACK && requestId === voiceRequestId) {
+      speakLine(lineForTask(taskData), taskData.initiatorPlayerId, taskData.locale, requestId);
     }
   });
 }
@@ -358,22 +400,18 @@ export function playDiceReactionVoice(line: string, playerId: number, locale: Ta
     return;
   }
 
-  void playLocalVoiceClip(locale, playerId, clipId).then(didPlayLocalVoice => {
-    if (!didPlayLocalVoice && ENABLE_SYSTEM_TTS_FALLBACK) {
-      speakLine(line, playerId, locale);
+  const voicePromise = playLocalVoiceClip(locale, playerId, clipId);
+  const requestId = voiceRequestId;
+  void voicePromise.then(didPlayLocalVoice => {
+    if (!didPlayLocalVoice && ENABLE_SYSTEM_TTS_FALLBACK && requestId === voiceRequestId) {
+      speakLine(line, playerId, locale, requestId);
     }
   });
 }
 
 export function stopCharacterVoice() {
-  if (activeLocalVoice) {
-    try {
-      activeLocalVoice.stop();
-    } catch {
-      // The source may already have ended.
-    }
-    activeLocalVoice = null;
-  }
+  voiceRequestId += 1;
+  stopActiveLocalVoice();
   if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel();
   }

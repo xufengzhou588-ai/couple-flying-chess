@@ -17,6 +17,7 @@ import { RewardSetupModal } from './components/modals/RewardSetupModal';
 import { MilestoneToast } from './components/MilestoneToast';
 import { PremiumPreviewModal } from './components/modals/PremiumPreviewModal';
 import { InvitePartnerModal } from './components/modals/InvitePartnerModal';
+import { RemoteSetupModal } from './components/modals/RemoteSetupModal';
 import { AppMessageModal } from './components/modals/AppMessageModal';
 import { localeLabels, t } from './i18n';
 import { getFinalRewards } from './data/gameExperience';
@@ -80,6 +81,8 @@ function App() {
   const [inviteRoomCode, setInviteRoomCode] = useState<string | null>(null);
   const [remoteRoomCode, setRemoteRoomCode] = useState<string | null>(null);
   const [remoteRole, setRemoteRole] = useState<RemoteRoomRole | null>(null);
+  const [remotePlayerId, setRemotePlayerId] = useState<number | null>(null);
+  const [remotePartnerPlayerId, setRemotePartnerPlayerId] = useState<number | null>(null);
   const [remoteSyncStatus, setRemoteSyncStatus] = useState<RemoteSyncStatus>('idle');
   const [remotePresence, setRemotePresence] = useState<RemotePresenceSnapshot>(emptyRemotePresence);
   const [milestoneEvent, setMilestoneEvent] = useState<MilestoneEventData | null>(null);
@@ -95,6 +98,11 @@ function App() {
   );
   const sendRemoteStateRef = useRef<((state: GameState) => void) | null>(null);
   const requestRemoteStateRef = useRef<(() => void) | null>(null);
+  const selectRemotePlayerRef = useRef<((playerId: number | null) => void) | null>(null);
+  const sendPlayerSelectionRef = useRef<((playerId: number) => void) | null>(null);
+  const sendThemeSelectionRef = useRef<((playerId: number, themeId: string) => void) | null>(null);
+  const remoteRoomIdentityRef = useRef('');
+  const partnerWasOnlineRef = useRef(false);
   const latestStateRef = useRef(state);
   const remoteRoleRef = useRef<RemoteRoomRole | null>(null);
   const skipNextRemoteBroadcastRef = useRef(false);
@@ -115,8 +123,11 @@ function App() {
     const theme = availableThemes.find(item => item.id === player.themeId);
     return !!theme && theme.tasks.length > 0;
   });
-  const remoteLocalPlayerId = remoteRole === 'guest' ? 1 : 0;
+  const remoteLocalPlayerId = remotePlayerId ?? -1;
   const hasRemoteRoom = !!remoteRoomCode && !!remoteRole;
+  const partnerPlayerId = remotePresence.participants.find(
+    participant => participant.clientId !== remoteClientIdRef.current
+  )?.playerId ?? remotePartnerPlayerId;
   const canControlCurrentTurn = !hasRemoteRoom || state.turn === remoteLocalPlayerId;
   const canResolveCurrentTask =
     !hasRemoteRoom || !state.activeTask || state.activeTask.executorPlayerId === remoteLocalPlayerId;
@@ -141,13 +152,20 @@ function App() {
   };
 
   const handleSelectTheme = (playerId: number) => {
-    if (remoteRoomCode && remoteRole === 'guest' && playerId === 0) {
+    if (remoteRoomCode && playerId !== remotePlayerId) {
       showInfo(copy.remote.hostPlayerLocked);
       return;
     }
 
     setSelectedPlayerId(playerId);
     setIsThemeModalOpen(true);
+  };
+
+  const handleThemeChosen = (themeId: string) => {
+    selectTheme(selectedPlayerId, themeId);
+    if (remoteRole === 'guest' && selectedPlayerId === remotePlayerId) {
+      sendThemeSelectionRef.current?.(selectedPlayerId, themeId);
+    }
   };
 
   useEffect(() => {
@@ -159,9 +177,10 @@ function App() {
       setRemoteRole('guest');
       setInviteMode('join');
       remoteGuestWaitingForHostRef.current = true;
+      switchView('home');
       setIsInviteOpen(true);
     }
-  }, []);
+  }, [switchView]);
 
   useEffect(() => {
     latestStateRef.current = state;
@@ -175,6 +194,10 @@ function App() {
     if (!remoteRoomCode || !remoteRole) {
       sendRemoteStateRef.current = null;
       requestRemoteStateRef.current = null;
+      selectRemotePlayerRef.current = null;
+      sendPlayerSelectionRef.current = null;
+      sendThemeSelectionRef.current = null;
+      setRemotePartnerPlayerId(null);
       setRemotePresence(emptyRemotePresence);
       setRemoteSyncStatus('idle');
       return;
@@ -182,8 +205,23 @@ function App() {
 
     const connection = connectRemoteRoom(remoteRoomCode, remoteClientIdRef.current, remoteRole, {
       onStatus: setRemoteSyncStatus,
-      onPresence: setRemotePresence,
+      onPresence: snapshot => {
+        setRemotePresence(snapshot);
+        if (!snapshot.hasPartner) setRemotePartnerPlayerId(null);
+        const partner = snapshot.participants.find(participant => participant.clientId !== remoteClientIdRef.current);
+        if (partner?.playerId === 0 || partner?.playerId === 1) setRemotePartnerPlayerId(partner.playerId);
+      },
+      onPlayerSelection: payload => setRemotePartnerPlayerId(payload.playerId),
+      onThemeSelection: payload => {
+        if (remoteRoleRef.current !== 'host') return;
+        const player = latestStateRef.current.players.find(item => item.id === payload.playerId);
+        const theme = latestStateRef.current.themes.find(item => item.id === payload.themeId);
+        if (!player || !theme || (!releaseFeatures.premium && theme.access === 'premium') ||
+          (theme.audience !== 'common' && theme.audience !== player.role) || theme.tasks.length === 0) return;
+        selectTheme(payload.playerId, payload.themeId);
+      },
       onState: (remoteState, payload) => {
+        if (remoteRoleRef.current === 'host' && remoteState.view === 'home') return;
         const lastSentAt = lastRemoteStateAtBySenderRef.current.get(payload.senderId) || 0;
         if (payload.sentAt <= lastSentAt) return;
         lastRemoteStateAtBySenderRef.current.set(payload.senderId, payload.sentAt);
@@ -202,13 +240,40 @@ function App() {
 
     sendRemoteStateRef.current = connection?.sendState || null;
     requestRemoteStateRef.current = connection?.requestState || null;
+    selectRemotePlayerRef.current = connection?.selectPlayer || null;
+    sendPlayerSelectionRef.current = connection?.sendPlayerSelection || null;
+    sendThemeSelectionRef.current = connection?.sendThemeSelection || null;
 
     return () => {
       sendRemoteStateRef.current = null;
       requestRemoteStateRef.current = null;
+      selectRemotePlayerRef.current = null;
+      sendPlayerSelectionRef.current = null;
+      sendThemeSelectionRef.current = null;
       connection?.disconnect();
     };
-  }, [applyRemoteState, remoteRole, remoteRoomCode]);
+  }, [applyRemoteState, remoteRole, remoteRoomCode, selectTheme]);
+
+  useEffect(() => {
+    if (remoteSyncStatus === 'connected') selectRemotePlayerRef.current?.(remotePlayerId);
+  }, [remotePlayerId, remoteSyncStatus]);
+
+  useEffect(() => {
+    if (remoteSyncStatus === 'connected' && remotePresence.hasPartner && remotePlayerId !== null) {
+      sendPlayerSelectionRef.current?.(remotePlayerId);
+    }
+  }, [remotePlayerId, remotePresence.hasPartner, remoteSyncStatus]);
+
+  useEffect(() => {
+    if (remoteRoomCode && state.view !== 'game' && remotePresence.hasPartner && !partnerWasOnlineRef.current) {
+      setIsInviteOpen(true);
+    }
+    partnerWasOnlineRef.current = remotePresence.hasPartner;
+  }, [remotePresence.hasPartner, remoteRoomCode, state.view]);
+
+  useEffect(() => {
+    if (remoteRole === 'guest' && state.view === 'game') setIsInviteOpen(false);
+  }, [remoteRole, state.view]);
 
   useEffect(() => {
     if (remoteSyncStatus !== 'connected' || !remoteGuestWaitingForHostRef.current) return;
@@ -234,62 +299,50 @@ function App() {
     }
 
     if (remoteGuestWaitingForHostRef.current) return;
+    if (remoteRole === 'guest' && state.view === 'home') return;
 
     const timer = window.setTimeout(() => {
       sendRemoteStateRef.current?.(state);
     }, 140);
 
     return () => window.clearTimeout(timer);
-  }, [remoteRoomCode, remoteSyncStatus, state]);
+  }, [remoteRole, remoteRoomCode, remoteSyncStatus, state]);
 
   const handleRoomCodeReady = useCallback((roomCode: string, options?: { role?: RemoteRoomRole; waitForHost?: boolean }) => {
     const normalized = normalizeRoomCode(roomCode);
     if (!normalized) return;
+    const identity = `${normalized}:${options?.role || 'host'}`;
+    if (remoteRoomIdentityRef.current !== identity) {
+      remoteRoomIdentityRef.current = identity;
+      setRemotePlayerId(null);
+      setRemotePartnerPlayerId(null);
+      switchView('home');
+    }
     setInviteRoomCode(normalized);
     setRemoteRoomCode(normalized);
     setRemoteRole(options?.role || 'host');
     remoteGuestWaitingForHostRef.current = !!options?.waitForHost;
-  }, []);
+  }, [switchView]);
 
   const handleStartGame = () => {
     if (remoteRoomCode && remoteRole === 'guest') {
       showInfo(copy.remote.hostOnlyStart);
-      return;
+      return false;
+    }
+
+    if (remoteRoomCode && (!remotePresence.hasPartner || remotePlayerId === null || partnerPlayerId === null || remotePlayerId === partnerPlayerId)) {
+      showInfo(copy.remote.partnerWaiting);
+      return false;
     }
 
     if (!startGame()) {
       showInfo(copy.selectedPrompt);
-      return;
+      return false;
     }
     taskBonusSecondsRef.current = 0;
     setActiveTask(null);
     setMilestoneEvent(null);
-  };
-
-  const handleEnterRemoteRoom = () => {
-    if (remoteRole === 'guest') {
-      remoteGuestWaitingForHostRef.current = true;
-      requestRemoteStateRef.current?.();
-      switchView('game');
-      setIsInviteOpen(false);
-      setInviteRoomCode(null);
-      return;
-    }
-
-    if (state.view !== 'game') {
-      if (!startGame()) {
-        showInfo(copy.selectedPrompt);
-        return;
-      }
-      taskBonusSecondsRef.current = 0;
-      setActiveTask(null);
-      setMilestoneEvent(null);
-    } else {
-      switchView('game');
-    }
-
-    setIsInviteOpen(false);
-    setInviteRoomCode(null);
+    return true;
   };
 
   const handleBackFromGame = () => {
@@ -370,11 +423,12 @@ function App() {
               onOpenPremium={() => setIsPremiumPreviewOpen(true)}
               onOpenInvite={() => {
                 setInviteMode('invite');
+                setInviteRoomCode(remoteRoomCode);
                 setIsInviteOpen(true);
               }}
               onOpenJoinInvite={() => {
-                setInviteMode('join');
-                setInviteRoomCode(null);
+                setInviteMode(remoteRole === 'host' ? 'invite' : 'join');
+                setInviteRoomCode(remoteRoomCode);
                 setIsInviteOpen(true);
               }}
               onOpenRewards={() => setIsRewardSetupOpen(true)}
@@ -412,7 +466,7 @@ function App() {
         themes={selectableThemes}
         copy={copy}
         selectedThemeId={selectedPlayer?.themeId || null}
-        onSelect={themeId => selectTheme(selectedPlayerId, themeId)}
+        onSelect={handleThemeChosen}
         onClose={() => setIsThemeModalOpen(false)}
       />
 
@@ -468,7 +522,7 @@ function App() {
       )}
 
       <InvitePartnerModal
-        isOpen={isInviteOpen}
+        isOpen={isInviteOpen && !(hasRemoteRoom && remoteSyncStatus === 'connected' && remotePresence.hasPartner && state.view !== 'game')}
         mode={inviteMode}
         initialRoomCode={inviteRoomCode}
         role={remoteRole}
@@ -477,11 +531,31 @@ function App() {
         copy={copy}
         onModeChange={setInviteMode}
         onRoomCodeReady={handleRoomCodeReady}
-        onEnterRoom={handleEnterRemoteRoom}
         onClose={() => {
           setIsInviteOpen(false);
           setInviteRoomCode(null);
         }}
+      />
+
+      <RemoteSetupModal
+        isOpen={isInviteOpen && hasRemoteRoom && remoteSyncStatus === 'connected' && remotePresence.hasPartner && state.view !== 'game'}
+        roomCode={remoteRoomCode || ''}
+        roomRole={remoteRole}
+        players={state.players}
+        themes={availableThemes}
+        copy={copy}
+        localPlayerId={remotePlayerId}
+        partnerPlayerId={partnerPlayerId}
+        canStart={canStartGame}
+        onSelectPlayer={setRemotePlayerId}
+        onSelectTheme={handleSelectTheme}
+        onStart={() => {
+          if (handleStartGame()) {
+            setIsInviteOpen(false);
+            setInviteRoomCode(null);
+          }
+        }}
+        onClose={() => setIsInviteOpen(false)}
       />
 
       <MilestoneToast event={milestoneEvent} unlockedLabel={copy.unlocked} />

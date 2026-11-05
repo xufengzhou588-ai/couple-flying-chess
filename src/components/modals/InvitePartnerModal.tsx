@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { IScannerControls } from '@zxing/browser';
+import { Capacitor } from '@capacitor/core';
 import {
   Camera,
   Copy,
-  Gamepad2,
   Link as LinkIcon,
   Loader2,
   LogIn,
@@ -37,7 +37,6 @@ interface InvitePartnerModalProps {
   copy: Translation;
   onModeChange: (mode: InvitePartnerMode) => void;
   onRoomCodeReady: (roomCode: string, options?: { role?: RemoteRoomRole; waitForHost?: boolean }) => void;
-  onEnterRoom: () => void;
   onClose: () => void;
 }
 
@@ -62,7 +61,6 @@ export function InvitePartnerModal({
   copy,
   onModeChange,
   onRoomCodeReady,
-  onEnterRoom,
   onClose
 }: InvitePartnerModalProps) {
   const [copied, setCopied] = useState(false);
@@ -78,6 +76,8 @@ export function InvitePartnerModal({
   const scannerControlsRef = useRef<IScannerControls | null>(null);
   const normalizedInitialRoomCode = useMemo(() => normalizeRoomCode(initialRoomCode), [initialRoomCode]);
   const remoteConfig = useMemo(() => getRemoteRoomConfig(), []);
+  const isNativeApp = Capacitor.isNativePlatform();
+  const canUseCamera = typeof window !== 'undefined' && window.isSecureContext && !!navigator.mediaDevices?.getUserMedia;
   const activeRoomCode = mode === 'join' ? joinedRoomCode : inviteRoomCode;
   const channelName = useMemo(
     () => (activeRoomCode ? createRemoteChannelName(activeRoomCode) : ''),
@@ -85,19 +85,42 @@ export function InvitePartnerModal({
   );
   const inviteUrl = useMemo(() => {
     if (typeof window === 'undefined') return '';
+    const localHost = ['localhost', '127.0.0.1', '0.0.0.0', '[::1]'].includes(window.location.hostname);
+    // A loopback or Capacitor URL only opens on the device that created it.
+    if (localHost || isNativeApp) return '';
     const url = new URL(window.location.href);
     url.searchParams.set('room', inviteRoomCode);
     return url.toString();
-  }, [inviteRoomCode]);
+  }, [inviteRoomCode, isNativeApp]);
+  const qrPayload = inviteUrl || (isNativeApp ? inviteRoomCode : '');
+
+  const acceptScannedText = useCallback((text: string) => {
+    const roomCode = readRoomCodeFromInput(text);
+    if (roomCode.length !== 6) return false;
+
+    scannerControlsRef.current?.stop();
+    scannerControlsRef.current = null;
+    setIsScannerOpen(false);
+    setScannerError('');
+    setJoinInput(roomCode);
+    setJoinedRoomCode(roomCode);
+    setJoinError(false);
+    onRoomCodeReady(roomCode, { role: 'guest', waitForHost: true });
+
+    const url = new URL(window.location.href);
+    url.searchParams.set('room', roomCode);
+    window.history.replaceState(null, '', url.toString());
+    return true;
+  }, [onRoomCodeReady]);
 
   useEffect(() => {
-    if (!isOpen || mode !== 'invite' || !inviteUrl) {
+    if (!isOpen || mode !== 'invite' || !qrPayload) {
       setQrDataUrl('');
       return;
     }
 
     let ignore = false;
-    import('qrcode').then(({ toDataURL }) => toDataURL(inviteUrl, {
+    import('qrcode').then(({ toDataURL }) => toDataURL(qrPayload, {
       errorCorrectionLevel: 'M',
       margin: 1,
       scale: 8,
@@ -112,7 +135,7 @@ export function InvitePartnerModal({
     return () => {
       ignore = true;
     };
-  }, [inviteUrl, isOpen, mode]);
+  }, [qrPayload, isOpen, mode]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -135,6 +158,8 @@ export function InvitePartnerModal({
   useEffect(() => {
     if (!isOpen || !isScannerOpen) return;
 
+    if (!canUseCamera) return;
+
     let cancelled = false;
     const startScanner = async () => {
       setIsScannerStarting(true);
@@ -147,23 +172,7 @@ export function InvitePartnerModal({
           const text = result?.getText();
           if (!text) return;
 
-          const roomCode = readRoomCodeFromInput(text);
-          if (roomCode.length < 4) return;
-
-          scannerControlsRef.current?.stop();
-          scannerControlsRef.current = null;
-          setIsScannerOpen(false);
-          setScannerError('');
-          setJoinInput(roomCode);
-          setJoinedRoomCode(roomCode);
-          setJoinError(false);
-          onRoomCodeReady(roomCode, { role: 'guest', waitForHost: true });
-
-          if (typeof window !== 'undefined') {
-            const url = new URL(window.location.href);
-            url.searchParams.set('room', roomCode);
-            window.history.replaceState(null, '', url.toString());
-          }
+          acceptScannedText(text);
         });
 
         if (cancelled) {
@@ -186,13 +195,30 @@ export function InvitePartnerModal({
       scannerControlsRef.current?.stop();
       scannerControlsRef.current = null;
     };
-  }, [copy.invite.scanError, isOpen, isScannerOpen, onRoomCodeReady]);
+  }, [acceptScannedText, canUseCamera, copy.invite.scanError, isOpen, isScannerOpen]);
+
+  const scanPhoto = async (file: File | undefined) => {
+    if (!file) return;
+    setScannerError('');
+    setIsScannerStarting(true);
+    const imageUrl = URL.createObjectURL(file);
+    try {
+      const { BrowserQRCodeReader } = await import('@zxing/browser');
+      const result = await new BrowserQRCodeReader().decodeFromImageUrl(imageUrl);
+      if (!acceptScannedText(result.getText())) setScannerError(copy.invite.scanImageError);
+    } catch {
+      setScannerError(copy.invite.scanImageError);
+    } finally {
+      URL.revokeObjectURL(imageUrl);
+      setIsScannerStarting(false);
+    }
+  };
 
   if (!isOpen) return null;
 
   const copyInvite = async () => {
     try {
-      await navigator.clipboard.writeText(inviteUrl);
+      await navigator.clipboard.writeText(inviteUrl || inviteRoomCode);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1200);
     } catch {
@@ -210,7 +236,7 @@ export function InvitePartnerModal({
       await navigator.share({
         title: copy.brand,
         text: `${copy.invite.roomCode}: ${inviteRoomCode}`,
-        url: inviteUrl
+        ...(inviteUrl ? { url: inviteUrl } : {})
       });
     } catch {
       // Sharing can be cancelled by the user.
@@ -368,7 +394,17 @@ export function InvitePartnerModal({
               </span>
             </div>
             <div className="mx-auto flex w-full max-w-[210px] items-center justify-center rounded-[22px] bg-[#fff7ed] p-3 shadow-[0_18px_50px_rgba(0,0,0,0.22)]">
-              <img src={qrDataUrl} alt={copy.invite.qrTitle} className="h-full w-full rounded-[14px]" />
+              {isNativeApp ? (
+                <div
+                  role="img"
+                  aria-label={copy.invite.qrTitle}
+                  className="aspect-square w-full rounded-[14px] bg-contain bg-center bg-no-repeat"
+                  style={{ backgroundImage: `url(${qrDataUrl})` }}
+                  onContextMenu={event => event.preventDefault()}
+                />
+              ) : (
+                <img src={qrDataUrl} alt={copy.invite.qrTitle} className="h-full w-full rounded-[14px]" />
+              )}
             </div>
           </div>
         ) : null}
@@ -382,6 +418,11 @@ export function InvitePartnerModal({
               {activeRoomCode}
             </div>
           </div>
+        ) : null}
+        {mode === 'invite' && !inviteUrl ? (
+          <p className="mt-2 text-center text-xs leading-relaxed text-amber-100/82">
+            {isNativeApp ? copy.invite.nativeQrHint : copy.invite.localLinkHint}
+          </p>
         ) : null}
 
         {activeRoomCode ? (
@@ -433,22 +474,6 @@ export function InvitePartnerModal({
           </div>
         ) : null}
 
-        {activeRoomCode && remoteConfig.status === 'ready' && syncStatus === 'connected' ? (
-          <div className="mt-3 rounded-[22px] border border-sky-100/18 bg-sky-100/10 p-3">
-            <button
-              type="button"
-              className="cfc-action-primary h-12 w-full"
-              onClick={onEnterRoom}
-            >
-              <Gamepad2 size={17} />
-              {role === 'guest' ? copy.invite.enterRoom : copy.invite.startPrivateGame}
-            </button>
-            <p className="mt-2 text-center text-xs leading-relaxed text-sky-100/72">
-              {copy.invite.enterRoomHint}
-            </p>
-          </div>
-        ) : null}
-
         {mode === 'invite' ? (
           <div className="mt-4 flex gap-3">
             <button
@@ -457,7 +482,7 @@ export function InvitePartnerModal({
               onClick={copyInvite}
             >
               <Copy size={17} />
-              {copied ? copy.invite.copied : copy.invite.copyLink}
+              {copied ? copy.invite.copied : inviteUrl ? copy.invite.copyLink : copy.invite.copyCode}
             </button>
             <button
               type="button"
@@ -497,18 +522,31 @@ export function InvitePartnerModal({
               </button>
             </div>
 
-            <div className="relative overflow-hidden rounded-[24px] border border-white/12 bg-black">
-              <video ref={videoRef} className="aspect-square w-full object-cover" muted playsInline />
-              <div className="pointer-events-none absolute inset-[14%] rounded-[22px] border-2 border-white/72 shadow-[0_0_0_999px_rgba(0,0,0,0.28)]" />
-              {isScannerStarting ? (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/36">
-                  <div className="flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-black text-[#16090f]">
-                    <Loader2 size={15} className="animate-spin" />
-                    {copy.invite.scanStarting}
+            {canUseCamera ? (
+              <div className="relative overflow-hidden rounded-[24px] border border-white/12 bg-black">
+                <video ref={videoRef} className="aspect-square w-full object-cover" muted playsInline />
+                <div className="pointer-events-none absolute inset-[14%] rounded-[22px] border-2 border-white/72 shadow-[0_0_0_999px_rgba(0,0,0,0.28)]" />
+                {isScannerStarting ? (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/36">
+                    <div className="flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-black text-[#16090f]">
+                      <Loader2 size={15} className="animate-spin" />
+                      {copy.invite.scanStarting}
+                    </div>
                   </div>
-                </div>
-              ) : null}
-            </div>
+                ) : null}
+              </div>
+            ) : (
+              <div className="rounded-[24px] border border-amber-100/20 bg-amber-100/10 p-4 text-sm leading-relaxed text-amber-100">
+                <p>{copy.invite.scanUnavailable}</p>
+                <label className="cfc-action-primary mt-4 flex h-11 cursor-pointer items-center justify-center gap-2 rounded-2xl text-white">
+                  <Camera size={17} />{isScannerStarting ? copy.invite.scanStarting : copy.invite.scanPhoto}
+                  <input type="file" accept="image/*" capture="environment" className="sr-only" disabled={isScannerStarting} onChange={event => {
+                    void scanPhoto(event.currentTarget.files?.[0]);
+                    event.currentTarget.value = '';
+                  }} />
+                </label>
+              </div>
+            )}
 
             {scannerError ? (
               <div className="mt-3 rounded-2xl border border-rose-100/18 bg-rose-100/10 px-3 py-2 text-xs leading-relaxed text-rose-100">

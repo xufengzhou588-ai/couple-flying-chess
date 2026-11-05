@@ -10,6 +10,7 @@ export type RemoteRoomRole = 'host' | 'guest';
 export interface RemoteParticipant {
   clientId: string;
   role: RemoteRoomRole;
+  playerId: number | null;
   joinedAt: number;
   lastSeenAt: number;
 }
@@ -41,9 +42,23 @@ interface RemoteStateRequestPayload {
   sentAt: number;
 }
 
+interface RemotePlayerSelectionPayload {
+  senderId: string;
+  playerId: number;
+}
+
+interface RemoteThemeSelectionPayload {
+  senderId: string;
+  playerId: number;
+  themeId: string;
+}
+
 interface RemoteRoomConnection {
   sendState: (state: GameState) => void;
   requestState: () => void;
+  selectPlayer: (playerId: number | null) => void;
+  sendPlayerSelection: (playerId: number) => void;
+  sendThemeSelection: (playerId: number, themeId: string) => void;
   disconnect: () => void;
 }
 
@@ -89,6 +104,7 @@ function normalizePresence(
   const state = channel.presenceState<{
     clientId?: string;
     role?: RemoteRoomRole;
+    playerId?: number | null;
     joinedAt?: number;
     lastSeenAt?: number;
   }>();
@@ -97,6 +113,7 @@ function normalizePresence(
     .map(item => ({
       clientId: typeof item.clientId === 'string' ? item.clientId : '',
       role: item.role === 'host' || item.role === 'guest' ? item.role : 'guest',
+      playerId: item.playerId === 0 || item.playerId === 1 ? item.playerId : null,
       joinedAt: typeof item.joinedAt === 'number' ? item.joinedAt : Date.now(),
       lastSeenAt: typeof item.lastSeenAt === 'number' ? item.lastSeenAt : Date.now()
     }))
@@ -154,6 +171,8 @@ export function connectRemoteRoom(
     onStatus: (status: RemoteSyncStatus) => void;
     onPresence?: (snapshot: RemotePresenceSnapshot) => void;
     onStateRequest?: (payload: RemoteStateRequestPayload) => void;
+    onPlayerSelection?: (payload: RemotePlayerSelectionPayload) => void;
+    onThemeSelection?: (payload: RemoteThemeSelectionPayload) => void;
   }
 ): RemoteRoomConnection | null {
   const normalizedRoomCode = normalizeRoomCode(roomCode);
@@ -168,11 +187,13 @@ export function connectRemoteRoom(
   handlers.onStatus('connecting');
 
   const joinedAt = Date.now();
+  let selectedPlayerId: number | null = null;
   let presenceHeartbeat: ReturnType<typeof setInterval> | null = null;
   const trackPresence = () => {
     void channel.track({
       clientId,
       role,
+      playerId: selectedPlayerId,
       joinedAt,
       lastSeenAt: Date.now()
     });
@@ -204,6 +225,16 @@ export function connectRemoteRoom(
       const payload = message.payload as RemoteStateRequestPayload | null;
       if (!payload || payload.senderId === clientId) return;
       handlers.onStateRequest?.(payload);
+    })
+    .on('broadcast', { event: 'player-selected' }, message => {
+      const payload = message.payload as RemotePlayerSelectionPayload | null;
+      if (!payload || payload.senderId === clientId || (payload.playerId !== 0 && payload.playerId !== 1)) return;
+      handlers.onPlayerSelection?.(payload);
+    })
+    .on('broadcast', { event: 'theme-selected' }, message => {
+      const payload = message.payload as RemoteThemeSelectionPayload | null;
+      if (!payload || payload.senderId === clientId || (payload.playerId !== 0 && payload.playerId !== 1) || typeof payload.themeId !== 'string') return;
+      handlers.onThemeSelection?.(payload);
     })
     .subscribe(status => {
       if (status === 'SUBSCRIBED') {
@@ -247,6 +278,24 @@ export function connectRemoteRoom(
           senderRole: role,
           sentAt: Date.now()
         } satisfies RemoteStateRequestPayload
+      });
+    },
+    selectPlayer: playerId => {
+      selectedPlayerId = playerId === 0 || playerId === 1 ? playerId : null;
+      trackPresence();
+    },
+    sendPlayerSelection: playerId => {
+      void channel.send({
+        type: 'broadcast',
+        event: 'player-selected',
+        payload: { senderId: clientId, playerId } satisfies RemotePlayerSelectionPayload
+      });
+    },
+    sendThemeSelection: (playerId, themeId) => {
+      void channel.send({
+        type: 'broadcast',
+        event: 'theme-selected',
+        payload: { senderId: clientId, playerId, themeId } satisfies RemoteThemeSelectionPayload
       });
     },
     disconnect: () => {
