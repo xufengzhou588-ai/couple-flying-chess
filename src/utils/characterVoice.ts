@@ -90,6 +90,7 @@ async function tryPlayAudioSource(src: string, requestId: number) {
 
   const buffer = await getLocalVoiceBuffer(context, src);
   if (!buffer || requestId !== voiceRequestId) return false;
+  if (context.state !== 'running' && !await resumeSharedAudioContext()) return false;
 
   const source = context.createBufferSource();
   const gain = context.createGain();

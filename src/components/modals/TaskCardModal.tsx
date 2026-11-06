@@ -134,7 +134,7 @@ export function TaskCardModal({
       stopCharacterVoice();
       document.body.style.overflow = '';
     };
-  }, [isOpen, taskData]);
+  }, [isOpen, taskData?.taskSourceId, taskData?.task, taskData?.title]);
 
   const finishTask = (action: 'accept' | 'reject') => {
     if (!canResolve) return;

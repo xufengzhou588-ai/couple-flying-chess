@@ -22,15 +22,27 @@ export async function resumeSharedAudioContext() {
   const context = getSharedAudioContext();
   if (!context) return null;
 
-  if (context.state === 'suspended') {
+  if (context.state !== 'running') {
     try {
-      await context.resume();
+      // WebKit can leave resume() pending after an iOS interruption. Let callers
+      // try their media/TTS fallback instead of reporting silent Web Audio as played.
+      let timeoutId: number | undefined;
+      try {
+        await Promise.race([
+          context.resume(),
+          new Promise<void>(resolve => {
+            timeoutId = window.setTimeout(resolve, 800);
+          })
+        ]);
+      } finally {
+        if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+      }
     } catch {
-      return context;
+      return null;
     }
   }
 
-  return context;
+  return context.state === 'running' ? context : null;
 }
 
 export async function unlockSharedAudioContext() {
