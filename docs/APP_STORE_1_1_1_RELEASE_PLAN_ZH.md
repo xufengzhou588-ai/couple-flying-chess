@@ -9,7 +9,7 @@
 - 局域网 HTTP 页面无法调用浏览器实时相机时，扫码页提供拍照识别二维码的入口；原生 App 显示仅包含六位房间码的二维码，另一端扫码即可加入。正式 App 的实时相机扫码仍须真机验证。
 - 包含当前源码中的本地角色语音播放修复；须用本次 TestFlight 构建验证男声和女声均可听见。
 
-源码目标版本为 `MARKETING_VERSION = 1.1.1`、`CURRENT_PROJECT_VERSION = 6`；账户持有人确认 App Store Connect 目前最高构建号为 5。本机模拟器包的 Info.plist 已核对为 1.1.1 (6)。GitHub Actions 的 IPA 导出选项启用了自动管理构建号，实际上传号仍以 App Store Connect 的“构建上传”页面为准。
+源码目标版本为 `MARKETING_VERSION = 1.1.1`、`CURRENT_PROJECT_VERSION = 7`。构建 6 已成功上传并在 App Store Connect 显示有效；随后发现邀请页仍有旧版开局提示，因此以构建 7 修正文案后重新上传。GitHub Actions 的 IPA 导出选项启用了自动管理构建号，实际上传号仍以 App Store Connect 的“构建上传”页面为准。
 
 ## 已完成的本地检查
 
@@ -20,7 +20,7 @@
 ## 待完成的发布路径
 
 1. App Store Connect 的 `1.1.1` 草稿已创建。保留免费价格；不要添加未完成的付费玩法。
-2. 发布代码已推送到 `release/1.1.1-remote-setup`。推送一次性标签 `testflight-1.1.1-build6` 后，`.github/workflows/ios-app-store.yml` 会先完成云端归档和 IPA 导出，全部通过才上传到 App Store Connect；工作流的手动运行入口仍可用于后续重试。
+2. 构建 6 已通过云端归档、IPA 导出和上传，且已经关联到 1.1.1 草稿。文案修正后推送一次性标签 `testflight-1.1.1-build7`；`.github/workflows/ios-app-store.yml` 会先完成云端归档和 IPA 导出，全部通过才上传到 App Store Connect。之后把草稿改为关联构建 7。
 3. 在 TestFlight 查看 1.1.1 的实际构建号和处理状态，分配给内部测试。iPhone 上验证：二维码相机权限及扫码、房间码加入、两端角色和题库选择、直接开局、双方回合、角色语音、挑战卡以及退出重进。
 4. 真机通过后，在 1.1.1 草稿选中该构建，核对截图与功能、美国区资料、隐私和审核备注，再提交 App Review。提交和正式发布是最后步骤。
 

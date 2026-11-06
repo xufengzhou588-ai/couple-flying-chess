@@ -260,8 +260,8 @@ export const t = {
       nativeQrHint: '这个二维码只包含房间码。请让另一半在同一个 App 扫码或输入房间码加入。',
       copied: '已复制',
       share: '分享',
-      next: '对方加入同一房间后，点击“开始私密游戏”进入棋盘并同步骰子、任务卡和奖励池。',
-      joinNext: '加入后点击“进入私密房间”。连接成功后会拉取房主当前棋局。',
+      next: '对方加入后，双方会自动进入准备页。选好角色和题库，房主即可开局。',
+      joinNext: '连接到房间后，双方会自动进入准备页。选好角色和题库后，由房主开局。',
       close: '关闭'
     },
     remote: {
@@ -600,8 +600,8 @@ export const t = {
       nativeQrHint: 'This QR contains only the room code. Your partner can scan it or enter the code in the same app.',
       copied: 'Copied',
       share: 'Share',
-      next: 'Once your partner joins the same room, tap Start Private Game to open the board and sync dice, cards, and rewards.',
-      joinNext: 'After joining, tap Enter Private Room. The current host game state is pulled in when connected.',
+      next: 'When your partner joins, setup opens for both of you. Choose characters and decks, then the host starts the game.',
+      joinNext: 'Once connected, setup opens for both of you. Choose characters and decks; the host starts when you’re ready.',
       close: 'Close'
     },
     remote: {
@@ -940,8 +940,8 @@ export const t = {
       nativeQrHint: 'Este QR solo contiene el código de sala. Tu pareja puede escanearlo o escribir el código en la misma app.',
       copied: 'Copiado',
       share: 'Compartir',
-      next: 'Cuando tu pareja entre a la misma sala, toca Iniciar partida privada para abrir el tablero y sincronizar dado, retos y premios.',
-      joinNext: 'Después de entrar, toca Entrar a sala privada. La partida actual se carga al conectarse.',
+      next: 'Cuando tu pareja se una, se abrirá la preparación para ambos. Elijan personajes y mazos; quien creó la sala iniciará la partida.',
+      joinNext: 'Al conectarte, se abrirá la preparación para ambos. Elijan personajes y mazos; quien creó la sala iniciará la partida.',
       close: 'Cerrar'
     },
     remote: {
