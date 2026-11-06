@@ -77,6 +77,7 @@ function App() {
   const [isRewardSetupOpen, setIsRewardSetupOpen] = useState(false);
   const [isPremiumPreviewOpen, setIsPremiumPreviewOpen] = useState(false);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [isRemoteSetupDismissed, setIsRemoteSetupDismissed] = useState(false);
   const [inviteMode, setInviteMode] = useState<InviteMode>('invite');
   const [inviteRoomCode, setInviteRoomCode] = useState<string | null>(null);
   const [remoteRoomCode, setRemoteRoomCode] = useState<string | null>(null);
@@ -102,7 +103,6 @@ function App() {
   const sendPlayerSelectionRef = useRef<((playerId: number) => void) | null>(null);
   const sendThemeSelectionRef = useRef<((playerId: number, themeId: string) => void) | null>(null);
   const remoteRoomIdentityRef = useRef('');
-  const partnerWasOnlineRef = useRef(false);
   const latestStateRef = useRef(state);
   const remoteRoleRef = useRef<RemoteRoomRole | null>(null);
   const skipNextRemoteBroadcastRef = useRef(false);
@@ -125,6 +125,8 @@ function App() {
   });
   const remoteLocalPlayerId = remotePlayerId ?? -1;
   const hasRemoteRoom = !!remoteRoomCode && !!remoteRole;
+  const remoteSetupReady = hasRemoteRoom && remotePresence.hasPartner && state.view !== 'game';
+  const showRemoteSetup = remoteSetupReady && !isRemoteSetupDismissed;
   const partnerPlayerId = remotePresence.participants.find(
     participant => participant.clientId !== remoteClientIdRef.current
   )?.playerId ?? remotePartnerPlayerId;
@@ -265,11 +267,8 @@ function App() {
   }, [remotePlayerId, remotePresence.hasPartner, remoteSyncStatus]);
 
   useEffect(() => {
-    if (remoteRoomCode && state.view !== 'game' && remotePresence.hasPartner && !partnerWasOnlineRef.current) {
-      setIsInviteOpen(true);
-    }
-    partnerWasOnlineRef.current = remotePresence.hasPartner;
-  }, [remotePresence.hasPartner, remoteRoomCode, state.view]);
+    if (!remoteRoomCode || !remotePresence.hasPartner) setIsRemoteSetupDismissed(false);
+  }, [remotePresence.hasPartner, remoteRoomCode]);
 
   useEffect(() => {
     if (remoteRole === 'guest' && state.view === 'game') setIsInviteOpen(false);
@@ -316,6 +315,9 @@ function App() {
       remoteRoomIdentityRef.current = identity;
       setRemotePlayerId(null);
       setRemotePartnerPlayerId(null);
+      setRemotePresence(emptyRemotePresence);
+      setRemoteSyncStatus('connecting');
+      setIsRemoteSetupDismissed(false);
       switchView('home');
     }
     setInviteRoomCode(normalized);
@@ -424,11 +426,13 @@ function App() {
               onOpenInvite={() => {
                 setInviteMode('invite');
                 setInviteRoomCode(remoteRoomCode);
+                setIsRemoteSetupDismissed(false);
                 setIsInviteOpen(true);
               }}
               onOpenJoinInvite={() => {
                 setInviteMode(remoteRole === 'host' ? 'invite' : 'join');
                 setInviteRoomCode(remoteRoomCode);
+                setIsRemoteSetupDismissed(false);
                 setIsInviteOpen(true);
               }}
               onOpenRewards={() => setIsRewardSetupOpen(true)}
@@ -522,7 +526,7 @@ function App() {
       )}
 
       <InvitePartnerModal
-        isOpen={isInviteOpen && !(hasRemoteRoom && remoteSyncStatus === 'connected' && remotePresence.hasPartner && state.view !== 'game')}
+        isOpen={isInviteOpen && !showRemoteSetup}
         mode={inviteMode}
         initialRoomCode={inviteRoomCode}
         role={remoteRole}
@@ -538,7 +542,7 @@ function App() {
       />
 
       <RemoteSetupModal
-        isOpen={isInviteOpen && hasRemoteRoom && remoteSyncStatus === 'connected' && remotePresence.hasPartner && state.view !== 'game'}
+        isOpen={showRemoteSetup}
         roomCode={remoteRoomCode || ''}
         roomRole={remoteRole}
         players={state.players}
@@ -552,10 +556,14 @@ function App() {
         onStart={() => {
           if (handleStartGame()) {
             setIsInviteOpen(false);
+            setIsRemoteSetupDismissed(true);
             setInviteRoomCode(null);
           }
         }}
-        onClose={() => setIsInviteOpen(false)}
+        onClose={() => {
+          setIsRemoteSetupDismissed(true);
+          setIsInviteOpen(false);
+        }}
       />
 
       <MilestoneToast event={milestoneEvent} unlockedLabel={copy.unlocked} />
