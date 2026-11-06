@@ -1,6 +1,9 @@
 name: iOS App Store
 
 on:
+  push:
+    tags:
+      - testflight-1.1.1-build6
   workflow_dispatch:
     inputs:
       upload_to_app_store:
@@ -142,7 +145,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload to App Store Connect
-        if: ${{ github.event.inputs.upload_to_app_store == 'true' }}
+        if: ${{ github.event.inputs.upload_to_app_store == 'true' || github.ref == 'refs/tags/testflight-1.1.1-build6' }}
         run: |
           IPA_PATH="$(find "$RUNNER_TEMP/export" -name "*.ipa" -print -quit)"
           if [ -z "$IPA_PATH" ]; then

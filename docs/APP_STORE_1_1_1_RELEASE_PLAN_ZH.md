@@ -20,7 +20,7 @@
 ## 待完成的发布路径
 
 1. App Store Connect 的 `1.1.1` 草稿已创建。保留免费价格；不要添加未完成的付费玩法。
-2. 将本次代码提交到可构建分支，通过 `.github/workflows/ios-app-store.yml` 的手动运行入口先选择 `upload_to_app_store=false` 验证云端归档和 IPA 导出；通过后选择 `true` 上传到 App Store Connect。
+2. 发布代码已推送到 `release/1.1.1-remote-setup`。推送一次性标签 `testflight-1.1.1-build6` 后，`.github/workflows/ios-app-store.yml` 会先完成云端归档和 IPA 导出，全部通过才上传到 App Store Connect；工作流的手动运行入口仍可用于后续重试。
 3. 在 TestFlight 查看 1.1.1 的实际构建号和处理状态，分配给内部测试。iPhone 上验证：二维码相机权限及扫码、房间码加入、两端角色和题库选择、直接开局、双方回合、角色语音、挑战卡以及退出重进。
 4. 真机通过后，在 1.1.1 草稿选中该构建，核对截图与功能、美国区资料、隐私和审核备注，再提交 App Review。提交和正式发布是最后步骤。
 
