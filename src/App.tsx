@@ -32,6 +32,7 @@ import {
 } from './utils/remoteRoom';
 
 const localeOrder = ['zh', 'en', 'es'] as const;
+const showMiniGamePreview = import.meta.env.VITE_SHOW_MINIGAMES === 'true';
 type InviteMode = 'invite' | 'join';
 type AppDialog = {
   message: string;
@@ -415,14 +416,22 @@ function App() {
               players={state.players}
               themes={availableThemes}
               copy={copy}
+              locale={state.locale}
               rewardCount={state.finalRewardIds.length}
               remoteRoomCode={remoteRoomCode}
               remoteRole={remoteRole}
               remoteSyncStatus={remoteSyncStatus}
               remoteHasPartner={remotePresence.hasPartner}
               showPremium={releaseFeatures.premium}
+              showMiniGames={showMiniGamePreview}
               onSelectTheme={handleSelectTheme}
               onOpenPremium={() => setIsPremiumPreviewOpen(true)}
+              onOpenMiniGames={() => {
+                const url = import.meta.env.DEV
+                  ? `${window.location.protocol}//${window.location.hostname}:5180/`
+                  : '/games/';
+                window.location.assign(url);
+              }}
               onOpenInvite={() => {
                 setInviteMode('invite');
                 setInviteRoomCode(remoteRoomCode);

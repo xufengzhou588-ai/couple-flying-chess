@@ -1,5 +1,5 @@
-import { ChevronRight, Crown, Flame, Gift, HeartHandshake, LogIn, Share2, Shuffle, Wifi } from 'lucide-react';
-import { Player, Theme } from '../../types';
+import { ChevronRight, Crown, Flame, Gift, HeartHandshake, LogIn, Share2, Shuffle, Sparkles, Wifi } from 'lucide-react';
+import { Locale, Player, Theme } from '../../types';
 import { Translation } from '../../i18n';
 import { CharacterToken } from '../CharacterToken';
 import { RemoteRoomRole, RemoteSyncStatus } from '../../utils/remoteRoom';
@@ -8,14 +8,17 @@ interface HomeViewProps {
   players: Player[];
   themes: Theme[];
   copy: Translation;
+  locale: Locale;
   rewardCount: number;
   remoteRoomCode: string | null;
   remoteRole: RemoteRoomRole | null;
   remoteSyncStatus: RemoteSyncStatus;
   remoteHasPartner: boolean;
   showPremium: boolean;
+  showMiniGames: boolean;
   onSelectTheme: (playerId: number) => void;
   onOpenPremium: () => void;
+  onOpenMiniGames: () => void;
   onOpenInvite: () => void;
   onOpenJoinInvite: () => void;
   onOpenRewards: () => void;
@@ -25,18 +28,26 @@ export function HomeView({
   players,
   themes,
   copy,
+  locale,
   rewardCount,
   remoteRoomCode,
   remoteRole,
   remoteSyncStatus,
   remoteHasPartner,
   showPremium,
+  showMiniGames,
   onSelectTheme,
   onOpenPremium,
+  onOpenMiniGames,
   onOpenInvite,
   onOpenJoinInvite,
   onOpenRewards
 }: HomeViewProps) {
+  const miniGameCopy = {
+    en: { title: 'Date Night Games', hint: 'Eight playful games for the two of you', detail: 'One phone · Couples preview' },
+    zh: { title: '情侣小游戏', hint: '八种适合两个人的趣味玩法', detail: '同机轮流 · 试玩版' },
+    es: { title: 'Juegos para dos', hint: 'Ocho juegos para una cita juntos', detail: 'Un teléfono · Vista previa' }
+  }[locale];
   const selectedCount = players.filter(player => player.themeId).length;
   const totalTasks = players.reduce((count, player) => {
     const theme = themes.find(item => item.id === player.themeId);
@@ -96,6 +107,24 @@ export function HomeView({
             }`}
           />
         </div>
+      )}
+
+      {showMiniGames && (
+        <button
+          type="button"
+          className="home-wide-action cfc-pressable cfc-surface-strong flex w-full items-center gap-3 rounded-[20px] p-3 text-left"
+          onClick={onOpenMiniGames}
+        >
+          <span className="home-action-icon cfc-icon-tile flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--cfc-rose-soft)] text-[#321018]">
+            <Sparkles size={20} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="home-action-title block font-black text-white">{miniGameCopy.title}</span>
+            <span className="home-action-hint mt-0.5 block text-[11px] leading-relaxed text-[var(--cfc-text-muted)]">{miniGameCopy.hint}</span>
+            <span className="mt-1 block text-[10px] font-semibold text-[var(--cfc-amber)]">{miniGameCopy.detail}</span>
+          </span>
+          <ChevronRight size={19} className="shrink-0 text-white/42" />
+        </button>
       )}
 
       <button
