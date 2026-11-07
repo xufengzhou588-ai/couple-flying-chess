@@ -5,12 +5,8 @@ const baseUrl = process.env.UNIFIED_PREVIEW_URL || 'http://127.0.0.1:5181/';
 const gamesUrl = new URL('/games/', baseUrl).toString();
 const modes = [
   ['The Slow Burn', 'Find our spark'],
-  ['Secret Mission', 'Deal our missions'],
-  ['Double Yes', 'Find our shared yeses'],
-  ['First Date, Again', 'Meet your characters'],
-  ['Heart Dice', 'Roll our first cards'],
-  ['Read My Mind', 'Start guessing'],
-  ['Wish Auction', 'Open the auction'],
+  ['Chemistry Dice', 'Choose our comfort'],
+  ['Sketch Our Date', 'Start our sketches'],
   ['Date Night Mystery', 'Open the first clue']
 ];
 
@@ -25,7 +21,7 @@ try {
   await page.getByRole('button', { name: 'EN', exact: true }).click();
   await page.getByRole('button', { name: /Date Night Games/ }).click();
   await page.waitForURL(gamesUrl);
-  assert.equal(await page.getByRole('button', { name: /^Play / }).count(), 8);
+  assert.equal(await page.getByRole('button', { name: /^Play / }).count(), 4);
   assert.equal(await page.getByRole('link', { name: 'Play Flight Chess' }).count(), 1);
   await page.getByRole('link', { name: 'Back to Flight Chess' }).click();
   await page.waitForURL(baseUrl);

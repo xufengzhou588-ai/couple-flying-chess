@@ -1,6 +1,6 @@
 export type Vibe = 'playful' | 'flirty';
 export type Stage = 'new' | 'together' | 'married';
-export type Mode = 'first-date' | 'mission' | 'double-yes' | 'heart-dice' | 'read-my-mind' | 'wish-auction' | 'date-mystery' | 'after-hours';
+export type Mode = 'first-date' | 'mission' | 'double-yes' | 'heart-dice' | 'read-my-mind' | 'wish-auction' | 'date-mystery' | 'after-hours' | 'sketch-date';
 export type Branch = 'missed-connection' | 'birthday';
 export type Names = [string, string];
 
@@ -17,11 +17,12 @@ export const games: Record<Mode, { title: string; category: string; description:
     title: 'Double Yes', category: 'A little discovery', time: '5–10 min',
     description: 'Pick what sounds fun. Find the ideas you both secretly love.',
   },
-  'heart-dice': { title: 'Heart Dice', category: 'A little chance', time: '5–8 min', description: 'Roll a prompt and a twist. Make the next move your own.' },
+  'heart-dice': { title: 'Chemistry Dice', category: 'A little heat', time: '5–8 min', description: 'One die picks the action. One picks a spot you both chose. See where the spark lands.' },
   'read-my-mind': { title: 'Read My Mind', category: 'A little discovery', time: '6–10 min', description: 'Guess what your person would pick. The best part is the story after.' },
   'wish-auction': { title: 'Wish Auction', category: 'A little negotiation', time: '8–12 min', description: 'Spend pretend tokens on tiny dates you both actually want.' },
   'date-mystery': { title: 'Date Night Mystery', category: 'A little teamwork', time: '8–12 min', description: 'Two private clues. One shared answer. Solve a night out together.' },
   'after-hours': { title: 'The Slow Burn', category: 'A little heat', time: '8–12 min', description: 'Choose a shared spark in private. Then play out one scene that belongs to you two.' },
+  'sketch-date': { title: 'Sketch Our Date', category: 'A little creativity', time: '5–8 min', description: 'Draw a date with your finger. Let your partner guess it, then pick one to try.' },
 };
 
 export const stageLabels: Record<Stage, string> = {

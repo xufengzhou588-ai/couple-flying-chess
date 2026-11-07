@@ -1,25 +1,13 @@
 import { useState } from 'react';
-import { ArrowRight, Check, Heart, Lightbulb, Lock, RefreshCw, Shuffle, Sparkles } from 'lucide-react';
+import { ArrowRight, Check, Heart, Lightbulb, Lock } from 'lucide-react';
 import { shuffled, stageLabels, type Names, type Stage, type Vibe } from './content';
-import { diceAnswer, dicePrompts, diceTwists, mindQuestions, mysteries, wishes } from './more-content';
+import { mindQuestions, mysteries, wishes } from './more-content';
 import { Button, Ending, Eyebrow, Handoff, Progress } from './shared';
 import { PromptIllustration } from './illustrations';
-import { diceIllustration, illustrationFor } from './illustration-map';
+import { illustrationFor } from './illustration-map';
 import { useScreenFocus } from './useScreenFocus';
 
 type Common = { names: Names; stage: Stage; vibe: Vibe; onHome: () => void; onReplay: () => void };
-
-export function HeartDice({ names, stage, vibe, onHome, onReplay }: Common) {
-  const [deck] = useState(() => shuffled(dicePrompts.filter(prompt => prompt.stage === stage)).slice(0, 4));
-  const [round, setRound] = useState(0);
-  const [twist, setTwist] = useState('');
-  const [phase, setPhase] = useState<'roll' | 'play' | 'end'>('roll');
-  const [rerolled, setRerolled] = useState(false);
-  useScreenFocus(`dice-${round}-${phase}`);
-  const nextTwist = (previous = '') => shuffled(diceTwists.filter(item => item !== previous))[0];
-  if (phase === 'end') return <Ending eyebrow="Four little moves" title="Keep the good part going." onHome={onHome} onReplay={onReplay}><p className="lede">Which answer would you want to hear more about? Give it five more minutes, if you both want.</p></Ending>;
-  return <section className="screen-narrow mini-game"><Eyebrow><Sparkles size={13} /> Heart Dice · {stageLabels[stage]}</Eyebrow><h1 tabIndex={-1}>{phase === 'roll' ? <>A little chance.<br /><em>A little chemistry.</em></> : <>Your move,<br /><em>{names[round % 2]}.</em></>}</h1><p className="lede">{phase === 'roll' ? `${names[round % 2]} goes first this round. Roll two cards, then make the prompt your own.` : 'Say it your way. Let your partner respond, too.'}</p><Progress current={round + 1} total={4} label="Roll" />{phase === 'roll' ? <div className="mini-stage"><div className="dice-preview"><span>01 / THE PROMPT</span><strong>?</strong></div><div className="dice-preview"><span>02 / THE TWIST</span><strong>?</strong></div></div> : <><div className="paper-card mini-paper"><span className="card-label">01 / SAY THIS YOUR WAY</span><PromptIllustration kind={diceIllustration(deck[round].id, vibe)} /><p>{diceAnswer(deck[round], vibe)}</p></div><div className="twist-card"><span>02 / THE TWIST</span><strong>{twist}</strong></div><div className="mini-actions"><Button variant="secondary" disabled={rerolled} onClick={() => { setTwist(nextTwist(twist)); setRerolled(true); }}><RefreshCw size={16} /> Reroll twist</Button><Button variant="quiet" onClick={() => { setTwist(''); setPhase(round === 3 ? 'end' : 'roll'); setRound(prev => prev + 1); setRerolled(false); }}>Pass this prompt</Button></div></>}{phase === 'roll' ? <Button className="full-width" onClick={() => { setTwist(nextTwist()); setPhase('play'); }}><Shuffle size={18} /> Roll the cards</Button> : <Button className="full-width" onClick={() => { setTwist(''); setPhase(round === 3 ? 'end' : 'roll'); setRound(prev => prev + 1); setRerolled(false); }}>{round === 3 ? 'Finish our round' : 'Next roll'} <ArrowRight size={18} /></Button>}<p className="form-footnote">A pass is always okay. No dares, no pressure.</p></section>;
-}
 
 export function ReadMyMind({ names, stage, onHome, onReplay }: Common) {
   const [deck] = useState(() => shuffled(mindQuestions.filter(question => question.stage === stage)).slice(0, 4));

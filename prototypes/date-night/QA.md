@@ -1,6 +1,18 @@
 # Off Script 原型验证
 
-最近验证日期：2026-11-05。范围仅为 `prototypes/date-night/` 的本地浏览器原型。
+## 2026-11-07 当前四款试玩阵容
+
+玩家可见的小游戏现为 The Slow Burn、Chemistry Dice、Sketch Our Date、Date Night Mystery；飞行棋仍是独立棋盘。旧八款文字原型的验证记录保留在下方，不能作为当前阵容的测试结论。
+
+- `tsc --noEmit -p prototypes/date-night/tsconfig.json`：通过。
+- `eslint` 检查当前改动的 React / TypeScript 文件：通过。
+- `npm run test:interactive-minigames`：情趣骰子在无共同部位时可重选；双方共同部位才进入骰子；Playful / Flirty 组合、四轮掷骰、重掷、计时、跳过且不进入收藏和结尾通过。画图约会的九个场景（三关系阶段 × 三轮）、手指/鼠标绘制、私密交接、猜测和结尾通过；390px 全流程及 320px 首页、骰子结果和画板无横向溢出，浏览器运行时错误 0。
+- `npm run test:unified-preview`：飞行棋首页与小游戏页往返，四款小游戏均可设置并开局，通过。
+- 仍待验证：VoiceOver 与真实双人试玩。中文和西班牙语尚未接入小游戏。
+
+## 2026-11-05 旧八款原型记录
+
+以下是改版前的历史结果，不能代替当前四款的验收。
 
 ## 结果
 

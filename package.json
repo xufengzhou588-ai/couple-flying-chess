@@ -8,6 +8,7 @@
     "dev:lan": "vite --host 0.0.0.0 --port 5174",
     "test:remote": "node scripts/test-remote-two-clients.mjs",
     "test:unified-preview": "node scripts/test-unified-preview.mjs",
+    "test:interactive-minigames": "node scripts/test-interactive-minigames.mjs",
     "clean:macos-junk": "find dist ios/App public src docs build app-store-screenshots test-artifacts -name '._*' -type f -delete 2>/dev/null || true",
     "build": "COPYFILE_DISABLE=1 COPY_EXTENDED_ATTRIBUTES_DISABLE=1 vite build && npm run clean:macos-junk",
     "build:unified-preview": "VITE_SHOW_MINIGAMES=true npm run build && VITE_INTEGRATED_PREVIEW=true VITE_FLIGHT_BOARD_URL=/ vite build --config prototypes/date-night/vite.config.ts --outDir ../../dist/games && npm run clean:macos-junk",

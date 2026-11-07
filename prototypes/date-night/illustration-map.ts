@@ -57,6 +57,7 @@ const artByMode: Record<Mode, ArtKind> = {
   'first-date': 'bar', mission: 'letter', 'double-yes': 'hands',
   'heart-dice': 'dice', 'read-my-mind': 'puzzle',
   'wish-auction': 'coins', 'date-mystery': 'book', 'after-hours': 'butterfly',
+  'sketch-date': 'paint',
 };
 export function sceneIllustration(branch: Branch, round: number): ArtKind {
   return round === 2 ? (branch === 'birthday' ? 'dessert' : 'chat') : (['bar', 'chat', 'chat', 'ticket'] as ArtKind[])[round];

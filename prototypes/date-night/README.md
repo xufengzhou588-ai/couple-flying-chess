@@ -1,12 +1,12 @@
 # Off Script — 美区情侣小游戏原型
 
-这是 Couple Flight 的本地玩法原型。面向刚开始约会、相处一段时间和已婚的成年伴侣，同机轮流操作，以英文内容检验搭讪、接话、秘密揭晓、共同选择和合作解谜是否有趣。内容尚未经美国英语母语编辑或真实情侣试玩验证。
+这是 Couple Flight 的本地玩法原型。面向刚开始约会、相处一段时间和已婚的成年伴侣，同机轮流操作，以英文内容检验调情剧情、双人掷骰、手指画图和合作解谜是否有趣。内容尚未经美国英语母语编辑或真实情侣试玩验证。
 
-## 飞行棋与八款小游戏同站试玩
+## 飞行棋与四款小游戏同站试玩
 
-仓库根目录运行 `npm run build:unified-preview`，会在 `dist/` 中放入飞行棋首页与 `/games/` 下的八款小游戏。仅该试玩构建开启飞行棋首页的小游戏入口；正常 `npm run build` 和当前 TestFlight 构建不会显示这个入口。小游戏页使用飞行棋的夜间背景、品牌抬头、玫瑰金强调色，并提供返回棋盘的链接。
+仓库根目录运行 `npm run build:unified-preview`，会在 `dist/` 中放入飞行棋首页与 `/games/` 下的四款小游戏。仅该试玩构建开启飞行棋首页的小游戏入口；正常 `npm run build` 和当前 TestFlight 构建不会显示这个入口。小游戏页使用飞行棋的夜间背景、品牌抬头、玫瑰金强调色，并提供返回棋盘的链接。
 
-运行 `node_modules/.bin/vite preview --host 127.0.0.1 --port 5181` 后，可在 `http://127.0.0.1:5181/` 与 `http://127.0.0.1:5181/games/` 往返。`npm run test:unified-preview` 检查两个入口互通、八款小游戏均可设置并开局；测试其他网址时设置 `UNIFIED_PREVIEW_URL`。八款小游戏仍只支持同一设备交接；飞行棋的远程联机不会自动延伸到它们。
+运行 `node_modules/.bin/vite preview --host 127.0.0.1 --port 5181` 后，可在 `http://127.0.0.1:5181/` 与 `http://127.0.0.1:5181/games/` 往返。`npm run test:unified-preview` 检查两个入口互通、四款小游戏均可设置并开局；测试其他网址时设置 `UNIFIED_PREVIEW_URL`。四款小游戏仍只支持同一设备交接；飞行棋的远程联机不会自动延伸到它们。
 
 ## 启动和检查
 
@@ -24,30 +24,22 @@ node_modules/.bin/vite build --config prototypes/date-night/vite.config.ts
 浏览器验证脚本需要现有 Playwright 和 Chrome：
 
 ```sh
-PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node prototypes/date-night/test-playtest.mjs
-PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node prototypes/date-night/test-more-games.mjs
-PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node prototypes/date-night/test-illustrations.mjs
-PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node prototypes/date-night/test-after-hours.mjs
+npm run test:interactive-minigames
+npm run test:unified-preview
 ```
 
-也可以将 Playwright 置于 Node 可解析的位置后，直接运行脚本。截图与结果写入被 Git 忽略的 `test-artifacts/date-night/`。
+旧的 `test-playtest.mjs`、`test-more-games.mjs` 和 `test-illustrations.mjs` 是八款文字原型时期的记录，不作为当前四款试玩版的验收脚本。截图与结果写入被 Git 忽略的 `test-artifacts/date-night/`。
 
-## 当前确实能玩的内容
+## 当前试玩阵容
 
-此前讨论的六类玩法均有对应原型：职业幻想剧场（First Date, Again）、心动骰子（Heart Dice）、默契猜心（Read My Mind）、双人秘密任务（Secret Mission）、心愿拍卖会（Wish Auction）和双人约会密室（Date Night Mystery）。Double Yes 是额外的共同兴趣选择玩法；The Slow Burn 是验证付费情趣方向的单场景样章。
-
-| 游戏 | 完整流程 | 内容体量 |
+| 游戏 | 实际操作 | 双人收获 |
 | --- | --- | --- |
-| First Date, Again | 双方私下看角色 → 四段对话 → 一起选择剧情反转 → 提出下一次约会 → 脱离角色复盘 → 交换角色重玩 | 调酒师与陌生人 1 个场景；错过的匹配 / 同日生日 2 个分支；Playful / Flirty 两种语气；每段 2 条开场及分别对应的接话提示 |
-| Secret Mission | 各自领取不同任务 → 可换任务 → 隐藏交接 → 自由聊天 / 可选计时 → 私下回看 → 先猜后揭晓 | 18 张任务，抽取关系阶段对应任务和通用任务 |
-| Double Yes | A 私下选 8 张活动 → 隐藏交接 → B 独立选择 → 仅展示双方明确选择的交集 → 选一个三步小约会 → 结束反馈 | 22 个活动，包含每阶段 2 个定制活动；每局 8 张，无重复 |
-| Heart Dice | 轮流抽问题与说法转折 → 可重抽转折一次或跳过 → 四轮后继续聊 | 每阶段 6 个专属问题；Playful / Flirty 不同文本；6 种转折 |
-| Read My Mind | 一人私下选答案 → 另一人私下猜 → 揭晓并追问 → 交换角色，四轮 | 每阶段 5 个问题；不以猜中率评价关系 |
-| Wish Auction | 双方各 5 个虚拟代币 → 私下对 4 个小约会出价 → 双方都出价才扣代币 → 选定细节并形成清单 | 每阶段 4 个专属愿望；任何一方可 Pass，无扣币 |
-| Date Night Mystery | 各自看不同线索 → 口头交换 → 共选答案 → 错误获得提示 → 三个场景完成故事 | 每阶段 3 个连贯谜题，共 9 个 |
-| The Slow Burn | 双方私下对 3 种亲近方式选 Yes / Maybe / Pass，并写下对伴侣的一个真实细节 → 仅揭晓共同开放的选择 → 选择其一，玩一段 3 幕场景 → 各自的细节进入台词提示 | 1 个样章，3 种互动，3 个关系阶段的场景与开场；尚无付费或远程功能 |
+| The Slow Burn | 私下选择双方愿意尝试的调情方向，再演一段短剧情 | 把一个真实细节带进两人的场景 |
+| Chemistry Dice（情趣骰子） | 双方私下选部位；一颗骰子掷动作、一颗掷共同选择的部位；可重掷或跳过 | 放下手机，尝试一个双方都愿意的小动作 |
+| Sketch Our Date | 一人用手指画约会，另一人猜，最后选一个想实现的方案 | 看见彼此的创意，留下下一次约会的念头 |
+| Date Night Mystery | 各自看不同线索，口头交换，合作解开三站约会 | 一起推理，而不是轮流回答问题 |
 
-八个模式均有可玩的开始、过程与结尾。关系阶段会影响题库、任务、活动、场景或收尾问题。模式间暂时独立。Double Yes 的结果能打开对应的三步约会，但不会自动带入 First Date 的剧情。不存在陌生人搜索、线上聊天、账号系统、情侣远程绑定或支付。
+旧的 First Date, Again、Secret Mission、Double Yes、Read My Mind、Wish Auction 仍保留在代码里供参考，但已从玩家可见的试玩阵容移除；之前的 Heart Dice 问答玩法已由情趣骰子替代。当前小游戏仍为英文草稿，仅支持同机，不含远程联机、付费或账号。玩法结构稳定后再按 `LOCALIZATION_QA.md` 完整制作中文和西班牙语。
 
 ## 付费方向的门槛
 
