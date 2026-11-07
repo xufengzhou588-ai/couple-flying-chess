@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, ArrowUpRight, Check, Clock, Eye, Heart, Lock, MessageCircle, Moon, Pause, Plane, Play, RefreshCw, Shuffle, Sparkles, Ticket, Users, X } from 'lucide-react';
 import { Button, Eyebrow, Progress, Handoff, Ending } from './shared';
 import { PromptIllustration } from './illustrations';
+import { CoupleGameEmblem } from '../../src/components/CoupleGameEmblem';
 import { illustrationFor, sceneIllustration } from './illustration-map';
 import { useScreenFocus } from './useScreenFocus';
 import { ReadMyMind, WishAuction, DateMystery } from './more-games';
@@ -13,10 +14,10 @@ import { dateIdeas, drawFresh, games, missions, mutualIdeas, roles, sceneBeats, 
 const flightBoardUrl = import.meta.env.VITE_FLIGHT_BOARD_URL || (import.meta.env.DEV ? `${window.location.protocol}//${window.location.hostname}:5174/` : '/');
 
 const gameCatalog = [
-  { mode: 'after-hours', number: '01', kind: 'FLIRT & PLAY', prompt: 'Find a shared spark' },
-  { mode: 'heart-dice', number: '02', kind: 'ROLL & MOVE', prompt: 'Roll a move together' },
-  { mode: 'sketch-date', number: '03', kind: 'DRAW & GUESS', prompt: 'Sketch your next date' },
-  { mode: 'date-mystery', number: '04', kind: 'SOLVE TOGETHER', prompt: 'Share clues, solve a date' },
+  { mode: 'after-hours', number: '01', kind: 'FLIRT & ROLEPLAY', prompt: 'Pick a spark you both want.' },
+  { mode: 'heart-dice', number: '02', kind: 'ROLL & TEASE', prompt: 'Let two dice choose your move.' },
+  { mode: 'sketch-date', number: '03', kind: 'DRAW & DREAM', prompt: 'Draw a date worth stealing.' },
+  { mode: 'date-mystery', number: '04', kind: 'CLUES FOR TWO', prompt: 'Trade clues. Solve together.' },
 ] as const;
 
 function Home({ onChoose }: { onChoose: (mode: Mode) => void }) {
@@ -24,8 +25,8 @@ function Home({ onChoose }: { onChoose: (mode: Mode) => void }) {
   return <div className="home-screen">
     <section className="home-intro">
       <div><Eyebrow><span className="small-star">✳</span> Just the two of you</Eyebrow>
-        <h1 tabIndex={-1}>What are we <em>playing tonight?</em></h1>
-        <p className="intro-copy">Flirt. Roll. Draw. Solve. Pick what sounds fun together.</p>
+        <h1 tabIndex={-1}>Just us. A little <em>mischief.</em></h1>
+        <p className="intro-copy">Four ways to flirt, get close, and surprise each other.</p>
       </div>
       <div className="evening-note"><Moon size={19} /><span>One phone.<br /><strong>Your night.</strong></span></div>
     </section>
@@ -33,15 +34,14 @@ function Home({ onChoose }: { onChoose: (mode: Mode) => void }) {
     <section className="game-catalog" aria-labelledby="game-catalog-title">
       <div className="catalog-heading"><h2 id="game-catalog-title">All four games</h2><span>Tap any game to start</span></div>
       <div className="catalog-grid">{gameCatalog.map(({ mode, number, kind, prompt }) => <button key={mode} className={`catalog-card catalog-card-${mode}`} type="button" aria-label={`Play ${games[mode].title}`} onClick={() => onChoose(mode)}>
-        <span className="catalog-top"><span className="catalog-number">{number} / {kind}</span><PromptIllustration kind={illustrationFor.game[mode]} className="catalog-art" /></span>
-        <strong className="catalog-title">{games[mode].title}</strong>
-        <span className="catalog-prompt">{prompt}</span>
-        <span className="catalog-footer"><span><Clock size={13} /> {games[mode].time}</span><span className="catalog-play">Play <ArrowUpRight size={16} /></span></span>
+        <CoupleGameEmblem mode={mode} className="catalog-emblem" />
+        <span className="catalog-copy"><span className="catalog-number">{number} / {kind}</span><strong className="catalog-title">{games[mode].title}</strong><span className="catalog-prompt">{prompt}</span><span className="catalog-duration"><Clock size={13} /> {games[mode].time}</span></span>
+        <span className="catalog-play">Play <ArrowUpRight size={16} /></span>
       </button>)}</div>
     </section>
 
     <a className="board-feature" href={flightBoardUrl} aria-label="Play Flight Chess">
-      <span className="board-feature-mark"><Plane size={23} /></span>
+      <span className="board-feature-mark"><Plane size={23} /><Heart size={11} fill="currentColor" className="board-feature-heart" /></span>
       <span className="board-feature-copy"><small>THE ORIGINAL COUPLE FLIGHT GAME</small><strong>Flight Chess</strong><span>Roll, flirt, and follow the board together. Play on one screen or invite your partner online.</span></span>
       <span className="board-feature-action">Play the board <ArrowUpRight size={18} /></span>
     </a>
@@ -53,6 +53,7 @@ function Setup({ mode, names, vibe, stage, onStart }: { mode: Mode; names: Names
   const [draftNames, setDraftNames] = useState<Names>(names);
   const [draftVibe, setDraftVibe] = useState<Vibe>(mode === 'after-hours' ? 'flirty' : vibe);
   const [draftStage, setDraftStage] = useState(stage);
+  const catalogGame = gameCatalog.find(game => game.mode === mode);
   useScreenFocus(`setup-${mode}`);
   const notes: Record<Mode, [string, string, string]> = {
     'first-date': ['Choose your names and the mood.', 'Read your roles privately, then act out four short beats.', 'Borrow a line whenever you want. No acting skills needed.'],
@@ -66,7 +67,7 @@ function Setup({ mode, names, vibe, stage, onStart }: { mode: Mode; names: Names
     'sketch-date': ['Take turns drawing a date idea with your finger.', 'Your partner guesses from three possible dates.', 'Choose one sketch you would actually like to try.'],
   };
   return <section className="setup-layout">
-    <div className="setup-intro"><Eyebrow>{games[mode].category}</Eyebrow><h1 tabIndex={-1}>{games[mode].title}</h1><p className="lede">{games[mode].description}</p><ol className="how-to">{notes[mode].map((note, i) => <li key={note}><span>0{i + 1}</span><p>{note}</p></li>)}</ol><p className="soft-note"><Clock size={15} /> {games[mode].time} · Go at your own pace.</p></div>
+    <div className="setup-intro"><Eyebrow>{games[mode].category}</Eyebrow><div className="setup-title-row">{catalogGame && <CoupleGameEmblem mode={catalogGame.mode} className="setup-emblem" />}<h1 tabIndex={-1}>{games[mode].title}</h1></div><p className="lede">{games[mode].description}</p><ol className="how-to">{notes[mode].map((note, i) => <li key={note}><span>0{i + 1}</span><p>{note}</p></li>)}</ol><p className="soft-note"><Clock size={15} /> {games[mode].time} · Go at your own pace.</p></div>
     <form className="setup-form" onSubmit={event => {
       event.preventDefault();
       const clean = draftNames.map((name, i) => name.trim() || `Player ${i + 1}`) as Names;
@@ -173,8 +174,9 @@ export default function App() {
   const seenMissions = useRef(new Set<string>());
   const seenIdeas = useRef(new Set<string>());
   function home() { setMode(null); setReady(false); setShowExit(false); }
+  const activeCatalogGame = gameCatalog.find(game => game.mode === mode);
   function leave() { if (ready) setShowExit(true); else home(); }
   function replay(swap = false) { if (swap) setNames(prev => [prev[1], prev[0]]); setSession(prev => prev + 1); }
   useEffect(() => { if (showExit) exitRef.current?.showModal(); else exitRef.current?.close(); }, [showExit]);
-  return <div className="app-shell"><a className="skip-link" href="#main">Skip to game</a><header className="site-header"><button className="brand" onClick={leave} aria-label="Date Night Games home"><span className="brand-mark"><Plane size={20} /></span><span>Couple Flight<small>DATE NIGHT GAMES</small></span></button>{mode ? <button className="exit-link" onClick={leave}><ArrowLeft size={16} /><span>{ready ? 'Leave game' : 'All games'}</span></button> : <a className="exit-link" href={flightBoardUrl} aria-label="Back to Flight Chess"><ArrowLeft size={16} /><span>Board</span></a>}</header><main id="main">{!mode ? <Home onChoose={value => { setMode(value); setReady(false); }} /> : !ready ? <Setup mode={mode} names={names} vibe={vibe} stage={stage} onStart={(newNames, newVibe, newStage) => { setNames(newNames); setVibe(newVibe); setStage(newStage); setReady(true); setSession(prev => prev + 1); }} /> : mode === 'first-date' ? <FirstDate key={session} names={names} vibe={vibe} stage={stage} onHome={home} onReplay={() => replay(true)} /> : mode === 'mission' ? <SecretMission key={session} names={names} vibe={vibe} stage={stage} seen={seenMissions.current} onHome={home} onReplay={() => replay()} /> : mode === 'double-yes' ? <DoubleYes key={session} names={names} vibe={vibe} stage={stage} seen={seenIdeas.current} onHome={home} onReplay={() => replay()} /> : mode === 'heart-dice' ? <ChemistryDice key={session} names={names} vibe={vibe} onHome={home} onReplay={() => replay()} /> : mode === 'read-my-mind' ? <ReadMyMind key={session} names={names} vibe={vibe} stage={stage} onHome={home} onReplay={() => replay()} /> : mode === 'wish-auction' ? <WishAuction key={session} names={names} vibe={vibe} stage={stage} onHome={home} onReplay={() => replay()} /> : mode === 'date-mystery' ? <DateMystery key={session} names={names} vibe={vibe} stage={stage} onHome={home} onReplay={() => replay()} /> : mode === 'sketch-date' ? <SketchDate key={session} names={names} stage={stage} onHome={home} onReplay={() => replay()} /> : <AfterHours key={session} names={names} vibe={vibe} stage={stage} onHome={home} onReplay={() => replay()} />}</main><footer className="site-footer"><span><Ticket size={14} /> A little time, just for you two.</span><span>Go at your own pace.</span></footer><dialog ref={exitRef} onCancel={() => setShowExit(false)} onClick={event => { if (event.target === event.currentTarget) setShowExit(false); }}><div className="exit-dialog"><Eyebrow>Pause for a moment</Eyebrow><h2>Call it a night?</h2><p>This round will be cleared. Your answers aren’t saved.</p><div className="action-stack"><Button onClick={home}>Leave this round</Button><Button variant="secondary" onClick={() => setShowExit(false)} autoFocus>Keep playing</Button></div></div></dialog></div>;
+  return <div className="app-shell"><a className="skip-link" href="#main">Skip to game</a><header className="site-header"><button className="brand" onClick={leave} aria-label="Date Night Games home"><span className={activeCatalogGame ? "brand-game-mark" : "brand-mark"}>{activeCatalogGame ? <CoupleGameEmblem mode={activeCatalogGame.mode} className="brand-game-emblem" /> : <Plane size={20} />}</span><span>Couple Flight<small>DATE NIGHT GAMES</small></span></button>{mode ? <button className="exit-link" onClick={leave}><ArrowLeft size={16} /><span>{ready ? 'Leave game' : 'All games'}</span></button> : <a className="exit-link" href={flightBoardUrl} aria-label="Back to Flight Chess"><ArrowLeft size={16} /><span>Board</span></a>}</header><main id="main">{!mode ? <Home onChoose={value => { setMode(value); setReady(false); }} /> : !ready ? <Setup mode={mode} names={names} vibe={vibe} stage={stage} onStart={(newNames, newVibe, newStage) => { setNames(newNames); setVibe(newVibe); setStage(newStage); setReady(true); setSession(prev => prev + 1); }} /> : mode === 'first-date' ? <FirstDate key={session} names={names} vibe={vibe} stage={stage} onHome={home} onReplay={() => replay(true)} /> : mode === 'mission' ? <SecretMission key={session} names={names} vibe={vibe} stage={stage} seen={seenMissions.current} onHome={home} onReplay={() => replay()} /> : mode === 'double-yes' ? <DoubleYes key={session} names={names} vibe={vibe} stage={stage} seen={seenIdeas.current} onHome={home} onReplay={() => replay()} /> : mode === 'heart-dice' ? <ChemistryDice key={session} names={names} vibe={vibe} onHome={home} onReplay={() => replay()} /> : mode === 'read-my-mind' ? <ReadMyMind key={session} names={names} vibe={vibe} stage={stage} onHome={home} onReplay={() => replay()} /> : mode === 'wish-auction' ? <WishAuction key={session} names={names} vibe={vibe} stage={stage} onHome={home} onReplay={() => replay()} /> : mode === 'date-mystery' ? <DateMystery key={session} names={names} vibe={vibe} stage={stage} onHome={home} onReplay={() => replay()} /> : mode === 'sketch-date' ? <SketchDate key={session} names={names} stage={stage} onHome={home} onReplay={() => replay()} /> : <AfterHours key={session} names={names} vibe={vibe} stage={stage} onHome={home} onReplay={() => replay()} />}</main><footer className="site-footer"><span><Ticket size={14} /> A little time, just for you two.</span><span>Go at your own pace.</span></footer><dialog ref={exitRef} onCancel={() => setShowExit(false)} onClick={event => { if (event.target === event.currentTarget) setShowExit(false); }}><div className="exit-dialog"><Eyebrow>Pause for a moment</Eyebrow><h2>Call it a night?</h2><p>This round will be cleared. Your answers aren’t saved.</p><div className="action-stack"><Button onClick={home}>Leave this round</Button><Button variant="secondary" onClick={() => setShowExit(false)} autoFocus>Keep playing</Button></div></div></dialog></div>;
 }

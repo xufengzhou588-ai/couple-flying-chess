@@ -1,8 +1,16 @@
-import { ChevronRight, Crown, Flame, Gift, HeartHandshake, LogIn, Share2, Shuffle, Sparkles, Wifi } from 'lucide-react';
+import { ChevronRight, Crown, Flame, Gift, HeartHandshake, LogIn, Share2, Shuffle, Wifi } from 'lucide-react';
 import { Locale, Player, Theme } from '../../types';
 import { Translation } from '../../i18n';
 import { CharacterToken } from '../CharacterToken';
+import { CoupleGameEmblem } from '../CoupleGameEmblem';
 import { RemoteRoomRole, RemoteSyncStatus } from '../../utils/remoteRoom';
+
+const miniGamePreviews = [
+  { mode: 'after-hours', title: 'The Slow Burn' },
+  { mode: 'heart-dice', title: 'Chemistry Dice' },
+  { mode: 'sketch-date', title: 'Sketch Our Date' },
+  { mode: 'date-mystery', title: 'Date Night Mystery' }
+] as const;
 
 interface HomeViewProps {
   players: Player[];
@@ -44,9 +52,9 @@ export function HomeView({
   onOpenRewards
 }: HomeViewProps) {
   const miniGameCopy = {
-    en: { title: 'Date Night Games', hint: 'Four playful games for the two of you', detail: 'One phone · Couples preview' },
-    zh: { title: '情侣小游戏', hint: '四种适合两个人的趣味玩法', detail: '同机轮流 · 试玩版' },
-    es: { title: 'Juegos para dos', hint: 'Cuatro juegos para disfrutar en pareja', detail: 'Un teléfono · Vista previa' }
+    en: { title: 'Date Night Games', hint: 'Four flirty ways to play together', detail: 'One phone · Couples preview' },
+    zh: { title: '情侣小游戏', hint: '四种让两人调情、亲近的玩法', detail: '同机轮流 · 试玩版' },
+    es: { title: 'Juegos para dos', hint: 'Cuatro juegos para coquetear y conectar', detail: 'Un teléfono · Vista previa' }
   }[locale];
   const selectedCount = players.filter(player => player.themeId).length;
   const totalTasks = players.reduce((count, player) => {
@@ -116,15 +124,16 @@ export function HomeView({
           onClick={onOpenMiniGames}
         >
           <span className="home-action-icon cfc-icon-tile flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--cfc-rose-soft)] text-[#321018]">
-            <Sparkles size={20} />
+            <HeartHandshake size={21} />
           </span>
           <span className="min-w-0 flex-1">
             <span className="home-action-title block font-black text-white">{miniGameCopy.title}</span>
             <span className="home-action-hint mt-0.5 block text-[11px] leading-relaxed text-[var(--cfc-text-muted)]">{miniGameCopy.hint}</span>
             <span className="mt-2 grid grid-cols-2 gap-1.5">
-              {['The Slow Burn', 'Chemistry Dice', 'Sketch Our Date', 'Date Night Mystery'].map(name => (
-                <span key={name} className="rounded-[10px] border border-[var(--cfc-border)] bg-white/[.055] px-2 py-1 text-[10px] font-bold leading-tight text-[var(--cfc-rose-soft)]">
-                  {name}
+              {miniGamePreviews.map(game => (
+                <span key={game.mode} className="flex min-w-0 items-center gap-1.5 rounded-[10px] border border-[var(--cfc-border)] bg-white/[.055] px-1.5 py-1 text-[10px] font-bold leading-tight text-[var(--cfc-rose-soft)]">
+                  <CoupleGameEmblem mode={game.mode} className="h-6 w-6 shrink-0" />
+                  <span>{game.title}</span>
                 </span>
               ))}
             </span>
