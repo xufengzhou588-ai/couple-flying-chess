@@ -12,15 +12,32 @@ import { dateIdeas, drawFresh, games, missions, mutualIdeas, roles, sceneBeats, 
 
 const flightBoardUrl = import.meta.env.VITE_FLIGHT_BOARD_URL || (import.meta.env.DEV ? `${window.location.protocol}//${window.location.hostname}:5174/` : '/');
 
+const gameCatalog = [
+  { mode: 'after-hours', number: '01', kind: 'FLIRT & PLAY', prompt: 'Find a shared spark' },
+  { mode: 'heart-dice', number: '02', kind: 'ROLL & MOVE', prompt: 'Roll a move together' },
+  { mode: 'sketch-date', number: '03', kind: 'DRAW & GUESS', prompt: 'Sketch your next date' },
+  { mode: 'date-mystery', number: '04', kind: 'SOLVE TOGETHER', prompt: 'Share clues, solve a date' },
+] as const;
+
 function Home({ onChoose }: { onChoose: (mode: Mode) => void }) {
   useScreenFocus('home');
   return <div className="home-screen">
     <section className="home-intro">
-      <div><Eyebrow><span className="small-star">✳</span> Tonight, go a little off script</Eyebrow>
-        <h1 tabIndex={-1}>Same person.<br /><em>New butterflies.</em></h1>
-        <p className="intro-copy">A little mystery. A little flirting.<br />Something that’s just for the two of you.</p>
+      <div><Eyebrow><span className="small-star">✳</span> Just the two of you</Eyebrow>
+        <h1 tabIndex={-1}>What are we <em>playing tonight?</em></h1>
+        <p className="intro-copy">Flirt. Roll. Draw. Solve. Pick what sounds fun together.</p>
       </div>
-      <div className="evening-note"><Moon size={19} /><span>Stay in.<br /><strong>Make a night of it.</strong></span></div>
+      <div className="evening-note"><Moon size={19} /><span>One phone.<br /><strong>Your night.</strong></span></div>
+    </section>
+
+    <section className="game-catalog" aria-labelledby="game-catalog-title">
+      <div className="catalog-heading"><h2 id="game-catalog-title">All four games</h2><span>Tap any game to start</span></div>
+      <div className="catalog-grid">{gameCatalog.map(({ mode, number, kind, prompt }) => <button key={mode} className={`catalog-card catalog-card-${mode}`} type="button" aria-label={`Play ${games[mode].title}`} onClick={() => onChoose(mode)}>
+        <span className="catalog-top"><span className="catalog-number">{number} / {kind}</span><PromptIllustration kind={illustrationFor.game[mode]} className="catalog-art" /></span>
+        <strong className="catalog-title">{games[mode].title}</strong>
+        <span className="catalog-prompt">{prompt}</span>
+        <span className="catalog-footer"><span><Clock size={13} /> {games[mode].time}</span><span className="catalog-play">Play <ArrowUpRight size={16} /></span></span>
+      </button>)}</div>
     </section>
 
     <a className="board-feature" href={flightBoardUrl} aria-label="Play Flight Chess">
@@ -28,36 +45,6 @@ function Home({ onChoose }: { onChoose: (mode: Mode) => void }) {
       <span className="board-feature-copy"><small>THE ORIGINAL COUPLE FLIGHT GAME</small><strong>Flight Chess</strong><span>Roll, flirt, and follow the board together. Play on one screen or invite your partner online.</span></span>
       <span className="board-feature-action">Play the board <ArrowUpRight size={18} /></span>
     </a>
-
-    <div className="collection-divider"><span>Four different ways to play together</span><span>One phone · Take turns</span></div>
-
-    <section className="game-shelf" aria-label="Choose your date-night game">
-      <article className="feature-game">
-        <div className="feature-copy"><span className="pill"><Sparkles size={13} /> A scene for two</span><p className="game-number">01 / THE SHARED SPARK</p>
-          <h2>The Slow<br /><em>Burn.</em></h2>
-          <p>{games['after-hours'].description}</p>
-          <div className="game-meta"><span><Clock size={14} /> 8–12 min</span><span><Users size={14} /> One phone</span></div>
-          <Button onClick={() => onChoose('after-hours')}>Play The Slow Burn <ArrowUpRight size={18} /></Button>
-        </div>
-        <div className="scene-art" aria-hidden="true">
-          <div className="ticket ticket-back"><span>JUST YOU TWO</span><Heart size={25} /></div>
-          <div className="ticket ticket-front"><div className="ticket-top"><span>YOUR SHARED SPARK</span><Moon size={25} /></div><div className="ticket-title">A move<br />you both chose.</div><div className="ticket-bottom"><span>One real detail.<br /><strong>One new scene.</strong></span><span>NO.<br />001</span></div></div>
-          <div className="dialogue-bubble">“I was trying to play it cool.<br />Then you smiled.”</div>
-          <span className="art-star star-one">✳</span><span className="art-star star-two">✧</span>
-        </div>
-      </article>
-      <div className="side-games">
-        <article className="small-game mission-card"><div className="small-game-top"><span className="game-number">02 / ROLL & MOVE</span><PromptIllustration kind={illustrationFor.game['heart-dice']} className="side-game-art" /></div>
-          <h2>Chemistry Dice</h2><p>{games['heart-dice'].description}</p>
-          <div className="small-game-footer"><span><Clock size={14} /> 5–8 min</span><button className="game-play-link" aria-label="Play Chemistry Dice" onClick={() => onChoose('heart-dice')}>Play <ArrowUpRight size={18} /></button></div>
-        </article>
-        <article className="small-game match-card"><div className="small-game-top"><span className="game-number">03 / DRAW & GUESS</span><PromptIllustration kind="paint" className="side-game-art" /></div>
-          <h2>Sketch Our Date</h2><p>{games['sketch-date'].description}</p>
-          <div className="small-game-footer"><span><Clock size={14} /> 5–8 min</span><button className="game-play-link" aria-label="Play Sketch Our Date" onClick={() => onChoose('sketch-date')}>Play <ArrowUpRight size={18} /></button></div>
-        </article>
-      </div>
-    </section>
-    <section className="more-section"><div className="more-heading"><div><Eyebrow>One mystery for two</Eyebrow><h2>Put your clues together.</h2></div><p>Share what each of you knows. Solve the date one stop at a time.</p></div><div className="more-grid"><article className="more-card more-card-0"><span className="game-number">04 / A LITTLE TEAMWORK</span><PromptIllustration kind={illustrationFor.game['date-mystery']} className="home-game-art" /><h3>{games['date-mystery'].title}</h3><p>{games['date-mystery'].description}</p><div className="small-game-footer"><span><Clock size={14} /> {games['date-mystery'].time}</span><button className="game-play-link" aria-label="Play Date Night Mystery" onClick={() => onChoose('date-mystery')}>Play <ArrowUpRight size={18} /></button></div></article></div></section>
     <div className="home-footnote"><span><Users size={16} /> These four games use one phone. Pass it between you.</span><span>No account. No audience. Just you.</span></div>
   </div>;
 }

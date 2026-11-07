@@ -635,3 +635,62 @@ dialog::backdrop { background: #09070cd9; }
     border-color: rgba(248, 211, 138, .5);
   }
 }
+
+/* Keep every playable game visible together before the longer board feature. */
+.home-screen .home-intro { padding: 30px 0 22px; }
+.home-screen .home-intro .eyebrow { margin-bottom: 10px; }
+.home-screen .home-intro h1 { max-width: 720px; margin-bottom: 10px; font-size: clamp(36px, 4.4vw, 56px); }
+.home-screen .intro-copy { max-width: 620px; }
+.catalog-heading { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.catalog-heading h2 { margin: 0; font: 700 25px/1.15 Georgia, serif; }
+.catalog-heading > span { color: var(--cfc-text-muted); font-size: 11px; }
+.catalog-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.catalog-card { display: flex; flex-direction: column; min-width: 0; min-height: 205px; padding: 14px; border: 1px solid var(--cfc-border); border-radius: var(--cfc-radius-lg); background: var(--cfc-select-surface); box-shadow: 0 16px 42px rgba(0, 0, 0, .2); color: var(--cfc-text); text-align: left; transition: transform var(--cfc-motion-fast) var(--cfc-ease), border-color var(--cfc-motion) var(--cfc-ease), filter var(--cfc-motion-fast) var(--cfc-ease); }
+.catalog-card:active { transform: scale(.975); }
+.catalog-top { display: flex; align-items: start; justify-content: space-between; gap: 4px; width: 100%; min-height: 65px; }
+.catalog-number { padding-top: 2px; color: var(--cfc-amber); font-size: 9px; font-weight: 800; line-height: 1.35; letter-spacing: 1px; }
+.catalog-card .catalog-art { width: 74px; height: 61px; flex: none; float: none; margin: 0; }
+.catalog-title { display: block; font: 700 22px/1.12 Georgia, serif; letter-spacing: -.35px; }
+.catalog-prompt { display: block; margin-top: 6px; color: var(--cfc-text-muted); font-size: 11px; line-height: 1.4; }
+.catalog-footer { display: flex; align-items: end; justify-content: space-between; gap: 6px; width: 100%; margin-top: auto; padding-top: 13px; }
+.catalog-footer > span:first-child { display: inline-flex; align-items: center; gap: 4px; color: var(--cfc-text-muted); font-size: 10px; white-space: nowrap; }
+.catalog-play { display: inline-flex; align-items: center; justify-content: center; gap: 2px; min-height: 29px; padding: 4px 7px; border-radius: 10px; background: linear-gradient(135deg, var(--cfc-amber), var(--cfc-rose-soft)); color: #241016; font-size: 10px; font-weight: 900; white-space: nowrap; }
+.home-screen .board-feature { min-height: 125px; margin-top: 21px; }
+@media (hover: hover) {
+  .catalog-card:hover { border-color: rgba(248, 211, 138, .5); filter: brightness(1.06); }
+}
+@media (max-width: 850px) {
+  .catalog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 650px) {
+  .home-screen .home-intro { padding: 21px 0 18px; }
+  .home-screen .home-intro h1 { font-size: 37px; letter-spacing: -1.3px; }
+  .home-screen .intro-copy { font-size: 12px; }
+  .catalog-heading h2 { font-size: 22px; }
+  .catalog-heading > span { font-size: 10px; }
+  .catalog-grid { gap: 9px; }
+  .catalog-card { min-height: 183px; padding: 11px; border-radius: 18px; }
+  .catalog-top { min-height: 52px; }
+  .catalog-number { font-size: 8px; letter-spacing: .7px; }
+  .catalog-card .catalog-art { width: 59px; height: 49px; }
+  .catalog-title { font-size: 19px; }
+  .catalog-prompt { font-size: 10px; }
+  .catalog-footer > span:first-child { font-size: 9px; }
+  .catalog-play { min-height: 27px; }
+  .home-screen .board-feature { grid-template-columns: 42px minmax(0, 1fr) 20px; min-height: 94px; gap: 10px; margin-top: 18px; padding: 12px; }
+  .home-screen .board-feature-mark { width: 42px; height: 42px; }
+  .home-screen .board-feature-copy small { font-size: 8px; letter-spacing: .7px; }
+  .home-screen .board-feature-copy strong { font-size: 21px; }
+  .home-screen .board-feature-copy > span { display: none; }
+  .home-screen .board-feature-action { grid-column: auto; font-size: 0; }
+}
+@media (max-width: 370px) {
+  .home-screen .home-intro h1 { font-size: 33px; }
+  .catalog-heading { align-items: baseline; }
+  .catalog-heading h2 { font-size: 20px; }
+  .catalog-card { padding: 9px; min-height: 183px; }
+  .catalog-card .catalog-art { width: 51px; height: 43px; }
+  .catalog-top { min-height: 47px; }
+  .catalog-title { font-size: 17px; }
+  .catalog-play { font-size: 9px; padding-inline: 5px; }
+}

@@ -121,6 +121,13 @@ export function HomeView({
           <span className="min-w-0 flex-1">
             <span className="home-action-title block font-black text-white">{miniGameCopy.title}</span>
             <span className="home-action-hint mt-0.5 block text-[11px] leading-relaxed text-[var(--cfc-text-muted)]">{miniGameCopy.hint}</span>
+            <span className="mt-2 grid grid-cols-2 gap-1.5">
+              {['The Slow Burn', 'Chemistry Dice', 'Sketch Our Date', 'Date Night Mystery'].map(name => (
+                <span key={name} className="rounded-[10px] border border-[var(--cfc-border)] bg-white/[.055] px-2 py-1 text-[10px] font-bold leading-tight text-[var(--cfc-rose-soft)]">
+                  {name}
+                </span>
+              ))}
+            </span>
             <span className="mt-1 block text-[10px] font-semibold text-[var(--cfc-amber)]">{miniGameCopy.detail}</span>
           </span>
           <ChevronRight size={19} className="shrink-0 text-white/42" />
