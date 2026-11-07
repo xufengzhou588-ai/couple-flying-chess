@@ -44,9 +44,9 @@ export function HomeView({
   onOpenRewards
 }: HomeViewProps) {
   const miniGameCopy = {
-    en: { title: 'Date Night Games', hint: 'Eight playful games for the two of you', detail: 'One phone · Couples preview' },
-    zh: { title: '情侣小游戏', hint: '八种适合两个人的趣味玩法', detail: '同机轮流 · 试玩版' },
-    es: { title: 'Juegos para dos', hint: 'Ocho juegos para una cita juntos', detail: 'Un teléfono · Vista previa' }
+    en: { title: 'Date Night Games', hint: 'Four playful games for the two of you', detail: 'One phone · Couples preview' },
+    zh: { title: '情侣小游戏', hint: '四种适合两个人的趣味玩法', detail: '同机轮流 · 试玩版' },
+    es: { title: 'Juegos para dos', hint: 'Cuatro juegos para disfrutar en pareja', detail: 'Un teléfono · Vista previa' }
   }[locale];
   const selectedCount = players.filter(player => player.themeId).length;
   const totalTasks = players.reduce((count, player) => {
