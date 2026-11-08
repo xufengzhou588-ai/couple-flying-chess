@@ -3,6 +3,8 @@ import { ArrowRight, Check, Eraser, Pencil, Timer } from 'lucide-react';
 import { Button, Ending, Eyebrow, Handoff, Progress } from './shared';
 import { shuffled, stageLabels, type Names, type Stage } from './content';
 import { useScreenFocus } from './useScreenFocus';
+import { useMiniI18n } from './mini-i18n';
+import { playMiniCue, playMiniVoice } from './mini-audio';
 
 type Sketch = { id: string; stage: Stage; title: string; choices: [string, string, string] };
 
@@ -24,6 +26,7 @@ type Result = { title: string; image: string; guessed: boolean };
 export function SketchDate({ names, stage, onHome, onReplay }: {
   names: Names; stage: Stage; onHome: () => void; onReplay: () => void;
 }) {
+  const { locale, tr, fmt, displayName } = useMiniI18n();
   const [deck] = useState(() => shuffled(sketches.filter(item => item.stage === stage)));
   const [round, setRound] = useState(0);
   const [phase, setPhase] = useState<Phase>('intro');
@@ -112,47 +115,47 @@ export function SketchDate({ names, stage, onHome, onReplay }: {
     }
   }
 
-  if (phase === 'intro') return <Handoff key={`artist-${round}`} name={names[artist]} title="Sketch our next date." label="Only the artist sees this date">
+  if (phase === 'intro') return <Handoff key={`artist-${round}`} name={names[artist]} voicePlayer={artist} title="Sketch our next date." label="Only the artist sees this date">
     <Progress current={round + 1} total={deck.length} label="Sketch" />
-    <div className="paper-card sketch-secret"><span className="card-label">DRAW THIS DATE</span><strong>{sketch.title}</strong></div>
-    <p className="supporting-copy">No words or numbers in the drawing. Give your partner clues with shapes, not labels.</p>
-    <Button className="full-width" onClick={() => setPhase('draw')}><Pencil size={17} /> Start sketching <ArrowRight size={17} /></Button>
+    <div className="paper-card sketch-secret"><span className="card-label">{tr("DRAW THIS DATE")}</span><strong>{tr(sketch.title)}</strong></div>
+    <p className="supporting-copy">{tr("No words or numbers in the drawing. Give your partner clues with shapes, not labels.")}</p>
+    <Button className="full-width" onClick={() => setPhase('draw')}><Pencil size={17} />{tr("Start sketching")} <ArrowRight size={17} /></Button>
   </Handoff>;
 
   if (phase === 'draw') return <section className="screen-narrow mini-game sketch-screen">
-    <Eyebrow>Sketch Our Date · {stageLabels[stage]}</Eyebrow>
-    <h1 tabIndex={-1}>Draw the <em>date.</em></h1>
-    <p className="lede">{sketch.title}</p>
-    <div className="sketch-toolbar"><span><Timer size={17} /> {seconds}s</span><button type="button" onClick={clearCanvas}><Eraser size={16} /> Clear canvas</button></div>
-    <canvas ref={canvasRef} width={720} height={500} aria-label="Draw the date idea with your finger or pointer" onPointerDown={startLine} onPointerMove={moveLine} onPointerUp={() => { drawing.current = false; }} onPointerCancel={() => { drawing.current = false; }} />
-    <p className="form-footnote">{seconds === 0 ? 'Time is up. Pass the drawing over.' : 'Draw with your finger. Your sketch stays on this device for this round.'}</p>
-    <Button className="full-width" onClick={finishDrawing}>Hide the answer & pass to {names[guesser]} <ArrowRight size={17} /></Button>
+    <Eyebrow>{tr("Sketch Our Date")} · {tr(stageLabels[stage])}</Eyebrow>
+    <h1 tabIndex={-1}>{tr("Draw the")} <em>{tr("date.")}</em></h1>
+    <p className="lede">{tr(sketch.title)}</p>
+    <div className="sketch-toolbar"><span><Timer size={17} /> {seconds}s</span><button type="button" onClick={clearCanvas}><Eraser size={16} /> {tr("Clear canvas")}</button></div>
+    <canvas ref={canvasRef} width={720} height={500} aria-label={tr("Draw the date idea with your finger or pointer")} onPointerDown={startLine} onPointerMove={moveLine} onPointerUp={() => { drawing.current = false; }} onPointerCancel={() => { drawing.current = false; }} />
+    <p className="form-footnote">{tr(seconds === 0 ? 'Time is up. Pass the drawing over.' : 'Draw with your finger. Your sketch stays on this device for this round.')}</p>
+    <Button className="full-width" onClick={finishDrawing}>{fmt('Hide the answer & pass to {name}', { name: displayName(names[guesser]) })} <ArrowRight size={17} /></Button>
   </section>;
 
-  if (phase === 'guess') return <Handoff key={`guess-${round}`} name={names[guesser]} title="Guess the date." label="The artist cannot give hints">
+  if (phase === 'guess') return <Handoff key={`guess-${round}`} name={names[guesser]} voicePlayer={guesser} title="Guess the date." label="The artist cannot give hints">
     <Progress current={round + 1} total={deck.length} label="Sketch" />
-    {image && <img className="sketch-result" src={image} alt={`Drawing by ${names[artist]}`} />}
-    <div className="option-list">{sketch.choices.map(choice => <Button key={choice} variant="secondary" className="full-width" onClick={() => { setGuessed(choice === sketch.title); setPhase('reveal'); }}>{choice} <ArrowRight size={16} /></Button>)}</div>
+    {image && <img className="sketch-result" src={image} alt={fmt("Drawing by {name}", { name: displayName(names[artist]) })} />}
+    <div className="option-list">{sketch.choices.map(choice => <Button key={choice} variant="secondary" className="full-width" onClick={() => { const correct = choice === sketch.title; setGuessed(correct); setPhase('reveal'); void playMiniCue(correct ? 'success' : 'reveal'); if (correct) playMiniVoice(locale, guesser, 'mini-solved'); }}>{tr(choice)} <ArrowRight size={16} /></Button>)}</div>
   </Handoff>;
 
   if (phase === 'reveal') return <section className="screen-narrow mini-game sketch-screen">
-    <Eyebrow>Sketch Our Date · The reveal</Eyebrow>
-    <h1 tabIndex={-1}>{guessed ? <>You <em>got it.</em></> : <>A new date <em>idea.</em></>}</h1>
-    {image && <img className="sketch-result" src={image} alt={`Drawing of ${sketch.title}`} />}
-    <div className="sketch-answer"><Check size={18} /><span>{sketch.title}</span></div>
-    <p className="supporting-copy">What tiny detail would make this date feel like yours?</p>
-    <Button className="full-width" onClick={nextRound}>{round === deck.length - 1 ? 'See our date sketches' : 'Draw the next date'} <ArrowRight size={17} /></Button>
+    <Eyebrow>{tr("Sketch Our Date · The reveal")}</Eyebrow>
+    <h1 tabIndex={-1}>{guessed ? <>{tr("You")} <em>{tr("got it.")}</em></> : <>{tr("A new date")} <em>{tr("idea.")}</em></>}</h1>
+    {image && <img className="sketch-result" src={image} alt={fmt("Drawing of {title}", { title: tr(sketch.title) })} />}
+    <div className="sketch-answer"><Check size={18} /><span>{tr(sketch.title)}</span></div>
+    <p className="supporting-copy">{tr("What tiny detail would make this date feel like yours?")}</p>
+    <Button className="full-width" onClick={nextRound}>{tr(round === deck.length - 1 ? 'See our date sketches' : 'Draw the next date')} <ArrowRight size={17} /></Button>
   </section>;
 
   if (phase === 'choose') return <section className="screen-narrow mini-game sketch-screen">
-    <Eyebrow>Sketch Our Date · Three ideas, one next date</Eyebrow>
-    <h1 tabIndex={-1}>Which one should<br /><em>we try?</em></h1>
-    <p className="lede">You guessed {results.filter(item => item.guessed).length} of 3. Pick a sketch you would actually like to turn into a date.</p>
-    <div className="sketch-gallery">{results.map(item => <button key={item.title} onClick={() => { setFavorite(item.title); setPhase('end'); }}><img src={item.image} alt={`Sketch of ${item.title}`} /><span>{item.title} <ArrowRight size={15} /></span></button>)}</div>
+    <Eyebrow>{tr("Sketch Our Date · Three ideas, one next date")}</Eyebrow>
+    <h1 tabIndex={-1}>{tr("Which one should")}<br /><em>{tr("we try?")}</em></h1>
+    <p className="lede">{fmt("You guessed {count} of 3. Pick a sketch you would actually like to turn into a date.", { count: results.filter(item => item.guessed).length })}</p>
+    <div className="sketch-gallery">{results.map(item => <button key={item.title} onClick={() => { setFavorite(item.title); setPhase('end'); }}><img src={item.image} alt={fmt("Sketch of {title}", { title: tr(item.title) })} /><span>{tr(item.title)} <ArrowRight size={15} /></span></button>)}</div>
   </section>;
 
   return <Ending eyebrow="Sketch Our Date · Your next idea" title={favorite} onHome={onHome} onReplay={onReplay} replayLabel="Sketch another round">
-    <p className="lede">You picked this together. Name one day you could try a small version of it.</p>
-    <p className="soft-note">Sketches stay on this device and disappear when you leave or reload.</p>
+    <p className="lede">{tr("You picked this together. Name one day you could try a small version of it.")}</p>
+    <p className="soft-note">{tr("Sketches stay on this device and disappear when you leave or reload.")}</p>
   </Ending>;
 }

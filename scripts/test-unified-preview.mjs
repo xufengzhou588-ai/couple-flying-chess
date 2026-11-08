@@ -20,7 +20,16 @@ try {
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await page.getByRole('button', { name: 'EN', exact: true }).click();
   await page.getByRole('button', { name: /Date Night Games/ }).click();
-  await page.waitForURL(gamesUrl);
+  await page.waitForURL(url => url.pathname === '/games/' && url.searchParams.get('lang') === 'en');
+  await page.getByRole('button', { name: 'Turn on date-night music' }).click();
+  await page.getByRole('button', { name: 'Turn off date-night music' }).waitFor();
+  await page.getByRole('button', { name: 'Turn off date-night music' }).click();
+  for (const locale of ['en', 'zh', 'es']) {
+    for (const gender of ['male', 'female']) {
+      const response = await page.request.get(new URL(`/audio/voice/${locale}/${gender}/mini-start.mp3`, baseUrl).toString());
+      assert.equal(response.status(), 200, `${locale} ${gender} mini voice is bundled`);
+    }
+  }
   assert.equal(await page.getByRole('button', { name: /^Play / }).count(), 4);
   assert.equal(await page.getByRole('link', { name: 'Play Flight Chess' }).count(), 1);
   await page.getByRole('link', { name: 'Back to Flight Chess' }).click();

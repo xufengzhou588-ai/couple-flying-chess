@@ -182,7 +182,7 @@ function createAmbientNodes(): AmbientNodes {
   return { context, master, scheduler };
 }
 
-export function AmbientSound({ copy, inGame = false }: { copy: Translation; inGame?: boolean }) {
+export function AmbientSound({ copy, inGame = false, className = '' }: { copy: Pick<Translation, 'soundOn' | 'soundOff'>; inGame?: boolean; className?: string }) {
   const [enabled, setEnabled] = useState(false);
   const nodesRef = useRef<AmbientNodes | null>(null);
 
@@ -230,7 +230,7 @@ export function AmbientSound({ copy, inGame = false }: { copy: Translation; inGa
   const button = (
     <button
       type="button"
-      className={`flex h-9 w-9 items-center justify-center rounded-2xl border transition active:scale-95 ${
+      className={`flex h-9 w-9 items-center justify-center rounded-2xl border transition active:scale-95 ${className} ${
         inGame ? 'fixed left-4 bottom-[calc(env(safe-area-inset-bottom)+172px)] z-[80] shadow-2xl backdrop-blur-xl' : ''
       } ${
         enabled

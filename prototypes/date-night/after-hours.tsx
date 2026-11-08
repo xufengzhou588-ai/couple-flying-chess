@@ -4,6 +4,8 @@ import { Button, Ending, Eyebrow, Handoff, Progress } from './shared';
 import { PromptIllustration, type ArtKind } from './illustrations';
 import { stageLabels, type Names, type Stage, type Vibe } from './content';
 import { useScreenFocus } from './useScreenFocus';
+import { useMiniI18n } from './mini-i18n';
+import { playMiniCue, playMiniVoice } from './mini-audio';
 
 type Choice = 'yes' | 'maybe' | 'pass';
 type Move = {
@@ -62,6 +64,7 @@ const invitations: Record<Stage, Record<Move['id'], string>> = {
 export function AfterHours({ names, stage, vibe, onHome, onReplay }: {
   names: Names; stage: Stage; vibe: Vibe; onHome: () => void; onReplay: () => void;
 }) {
+  const { locale, tr, fmt, displayName } = useMiniI18n();
   const [phase, setPhase] = useState<'pick' | 'detail' | 'reveal' | 'scene' | 'ending'>('pick');
   const [owner, setOwner] = useState(0);
   const [index, setIndex] = useState(0);
@@ -85,66 +88,66 @@ export function AfterHours({ names, stage, vibe, onHome, onReplay }: {
     } else setPhase('detail');
   }
 
-  if (phase === 'detail') return <Handoff key={owner} name={names[owner]} title="Make it yours." label="One detail only you know">
-    <p className="lede">Think of one small thing about {names[owner === 0 ? 1 : 0]} that caught your attention. You can bring it into your scene later.</p>
-    <label className="after-hours-detail">Your private detail
-      <input maxLength={80} autoComplete="off" placeholder={stage === 'new' ? 'e.g. the way they laughed tonight' : 'e.g. that look across the kitchen'} value={details[owner]} onChange={event => setDetails(previous => owner === 0 ? [event.target.value, previous[1]] : [previous[0], event.target.value])} />
+  if (phase === 'detail') return <Handoff key={owner} name={names[owner]} voicePlayer={owner} title="Make it yours." label="One detail only you know">
+    <p className="lede">{fmt("Think of one small thing about {name} that caught your attention. You can bring it into your scene later.", { name: displayName(names[owner === 0 ? 1 : 0]) })}</p>
+    <label className="after-hours-detail">{tr("Your private detail")}
+      <input maxLength={80} autoComplete="off" placeholder={tr(stage === 'new' ? 'e.g. the way they laughed tonight' : 'e.g. that look across the kitchen')} value={details[owner]} onChange={event => setDetails(previous => owner === 0 ? [event.target.value, previous[1]] : [previous[0], event.target.value])} />
     </label>
-    <p className="form-footnote">Your words appear only if you both choose to play a scene. You can leave this blank.</p>
-    <Button className="full-width" onClick={() => { if (owner === 0) { setOwner(1); setIndex(0); setPhase('pick'); } else setPhase('reveal'); }}>{owner === 0 ? `Hide & pass to ${names[1]}` : 'Hide & reveal our sparks'} <ArrowRight size={17} /></Button>
+    <p className="form-footnote">{tr("Your words appear only if you both choose to play a scene. You can leave this blank.")}</p>
+    <Button className="full-width" onClick={() => { if (owner === 0) { setOwner(1); setIndex(0); setPhase('pick'); } else setPhase('reveal'); }}>{owner === 0 ? fmt('Hide & pass to {name}', { name: displayName(names[1]) }) : tr('Hide & reveal our sparks')} <ArrowRight size={17} /></Button>
   </Handoff>;
 
   if (phase === 'pick') {
     const move = moves[index];
-    return <Handoff key={owner} name={names[owner]} title="What sounds good tonight?" label="Only you see these choices">
+    return <Handoff key={owner} name={names[owner]} voicePlayer={owner} title="What sounds good tonight?" label="Only you see these choices">
       <Progress current={index + 1} total={moves.length} label="Spark" />
       <div className="paper-card mini-paper after-hours-choice" data-move-id={move.id}>
-        <span className="card-label">A SMALL MOVE</span>
+        <span className="card-label">{tr("A SMALL MOVE")}</span>
         <PromptIllustration kind={move.art} />
-        <p>{move.title}</p><small>{move.pitch}</small>
+        <p>{tr(move.title)}</p><small>{tr(move.pitch)}</small>
       </div>
       <div className="after-hours-votes">
-        <Button className="full-width" onClick={() => choose('yes')}><Heart size={17} /> Yes, tonight</Button>
-        <Button className="full-width" variant="secondary" onClick={() => choose('maybe')}><Sparkles size={17} /> Maybe, ask me</Button>
-        <Button className="full-width" variant="quiet" onClick={() => choose('pass')}>Pass for now</Button>
+        <Button className="full-width" onClick={() => choose('yes')}><Heart size={17} /> {tr("Yes, tonight")}</Button>
+        <Button className="full-width" variant="secondary" onClick={() => choose('maybe')}><Sparkles size={17} /> {tr("Maybe, ask me")}</Button>
+        <Button className="full-width" variant="quiet" onClick={() => choose('pass')}> {tr("Pass for now")}</Button>
       </div>
-      <p className="form-footnote">A “maybe” is an invitation to ask again, never an automatic yes. Passed choices stay private.</p>
+      <p className="form-footnote">{tr("A “maybe” is an invitation to ask again, never an automatic yes. Passed choices stay private.")}</p>
     </Handoff>;
   }
 
   if (phase === 'reveal') return <section className="screen-narrow mini-game after-hours-screen">
-    <Eyebrow><Moon size={14} /> The Slow Burn · {stageLabels[stage]}</Eyebrow>
-    <h1 tabIndex={-1}>{matches.length ? <>You both left<br /><em>the door open.</em></> : <>Tonight can stay<br /><em>easy.</em></>}</h1>
-    <p className="lede">{matches.length ? 'Pick one spark to play out together. You can change your minds at any point.' : 'No shared spark this round. Keep the good company, or try another night.'}</p>
+    <Eyebrow><Moon size={14} /> {tr("The Slow Burn")} · {tr(stageLabels[stage])}</Eyebrow>
+    <h1 tabIndex={-1}>{matches.length ? <>{tr("You both left")}<br /><em>{tr("the door open.")}</em></> : <>{tr("Tonight can stay")}<br /><em>{tr("easy.")}</em></>}</h1>
+    <p className="lede">{tr(matches.length ? 'Pick one spark to play out together. You can change your minds at any point.' : 'No shared spark this round. Keep the good company, or try another night.')}</p>
     {matches.length > 0 && <div className="after-hours-match-list">{matches.map(move =>
-      <button key={move.id} className={`after-hours-match ${move.art ? '' : 'artless'}`} data-match-move={move.id} onClick={() => { setSelected(move); setPhase('scene'); }}>
-        <PromptIllustration kind={move.art} /><span><small>YOUR SHARED SPARK</small><strong>{move.title}</strong><em>{move.pitch}</em></span><ArrowRight size={19} />
+      <button key={move.id} className={`after-hours-match ${move.art ? '' : 'artless'}`} data-match-move={move.id} onClick={() => { setSelected(move); setPhase('scene'); void playMiniCue('reveal'); playMiniVoice(locale, 1, 'mini-spark'); }}>
+        <PromptIllustration kind={move.art} /><span><small>{tr("YOUR SHARED SPARK")}</small><strong>{tr(move.title)}</strong><em>{tr(move.pitch)}</em></span><ArrowRight size={19} />
       </button>)}</div>}
-    <p className="soft-note"><Lock size={14} /> Everything else stays between each person and their choices.</p>
-    <Button className="full-width" variant="secondary" onClick={matches.length ? onReplay : onHome}>{matches.length ? 'Start a different round' : 'Choose another game'}</Button>
+    <p className="soft-note"><Lock size={14} /> {tr("Everything else stays between each person and their choices.")}</p>
+    <Button className="full-width" variant="secondary" onClick={matches.length ? onReplay : onHome}>{tr(matches.length ? 'Start a different round' : 'Choose another game')}</Button>
   </section>;
 
   if (phase === 'scene' && selected) return <section className="screen-narrow mini-game after-hours-screen">
-    <Eyebrow><Moon size={14} /> The Slow Burn · {selected.title}</Eyebrow>
-    <h1 tabIndex={-1}>{beat === 0 ? <>Set the <em>scene.</em></> : beat === 1 ? <>Make your <em>move.</em></> : <>Give it <em>back.</em></>}</h1>
+    <Eyebrow><Moon size={14} /> {tr("The Slow Burn")} · {tr(selected.title)}</Eyebrow>
+    <h1 tabIndex={-1}>{beat === 0 ? <>{tr("Set the")} <em>{tr("scene.")}</em></> : beat === 1 ? <>{tr("Make your")} <em>{tr("move.")}</em></> : <>{tr("Give it")} <em>{tr("back.")}</em></>}</h1>
     <Progress current={beat + 1} total={3} label="Beat" />
     <div className="paper-card mini-paper after-hours-scene">
-      <span className="card-label">{beat === 0 ? 'YOUR SETTING' : beat === 1 ? `${names[0].toUpperCase()}, YOUR INVITATION` : `${names[1].toUpperCase()}, YOUR REPLY`}</span>
+      <span className="card-label">{beat === 0 ? tr('YOUR SETTING') : beat === 1 ? fmt('{name}, YOUR INVITATION', { name: displayName(names[0]) }) : fmt('{name}, YOUR REPLY', { name: displayName(names[1]) })}</span>
       <PromptIllustration kind={beat === 0 ? (stage === 'new' ? undefined : 'home') : selected.art} />
-      <p>{beat === 0 ? settings[stage] : beat === 1 ? (vibe === 'playful' && selected.id === 'closer' ? '“Want to come a little closer, or should I try one more opening line?”' : invitations[stage][selected.id]) : selected.comeback}</p>
-      <small>{beat === 0 ? 'Put the phone down for a breath. Decide who will make the first move.' : beat === 1 ? selected.action : 'Use your own words. Then decide together whether to linger or leave this moment here.'}</small>
-      {beat > 0 && details[beat - 1].trim() && <div className="after-hours-callback"><Sparkles size={15} /><span>Make it personal: “{details[beat - 1].trim()}”</span></div>}
+      <p>{tr(beat === 0 ? settings[stage] : beat === 1 ? (vibe === 'playful' && selected.id === 'closer' ? '“Want to come a little closer, or should I try one more opening line?”' : invitations[stage][selected.id]) : selected.comeback)}</p>
+      <small>{tr(beat === 0 ? 'Put the phone down for a breath. Decide who will make the first move.' : beat === 1 ? selected.action : 'Use your own words. Then decide together whether to linger or leave this moment here.')}</small>
+      {beat > 0 && details[beat - 1].trim() && <div className="after-hours-callback"><Sparkles size={15} /><span>{fmt("Make it personal: “{detail}”", { detail: details[beat - 1].trim() })}</span></div>}
     </div>
-    {beat < 2 ? <Button className="full-width" onClick={() => setBeat(beat + 1)}>{beat === 0 ? 'We’re ready' : 'Your turn to respond'} <ArrowRight size={17} /></Button> : <div className="after-hours-finish">
-      <Button onClick={() => { setEnding('linger'); setPhase('ending'); }}><Heart size={17} /> Linger here</Button>
-      <Button variant="secondary" onClick={() => { setEnding('later'); setPhase('ending'); }}>Save it for later</Button>
+    {beat < 2 ? <Button className="full-width" onClick={() => setBeat(beat + 1)}>{tr(beat === 0 ? 'We’re ready' : 'Your turn to respond')} <ArrowRight size={17} /></Button> : <div className="after-hours-finish">
+      <Button onClick={() => { setEnding('linger'); setPhase('ending'); }}><Heart size={17} /> {tr("Linger here")}</Button>
+      <Button variant="secondary" onClick={() => { setEnding('later'); setPhase('ending'); }}> {tr("Save it for later")}</Button>
     </div>}
-    <p className="form-footnote">The line is a starting point. Either person can pause, change the move, or pass.</p>
+    <p className="form-footnote">{tr("The line is a starting point. Either person can pause, change the move, or pass.")}</p>
   </section>;
 
   return <Ending eyebrow="The Slow Burn · Your scene" title={selected ? (ending === 'linger' ? 'Stay with that feeling.' : 'Leave a little spark for later.') : 'Another night is yours.'} onHome={onHome} onReplay={onReplay} replayLabel="Play a new scene">
-    <p className="lede">{selected ? (ending === 'linger' ? `You chose “${selected.title}.” Put the phone away and let the next moment be yours.` : `You chose “${selected.title}.” Tell each other one thing you liked, then make your own plan for another night.`) : 'You can choose a new spark whenever you both want.'}</p>
-    <div className="debrief"><h2>What stays with you?</h2><p>One look, one line, or one small move. Say which one you want to remember.</p></div>
-    <p className="soft-note"><Check size={14} /> Nothing from this round is saved.</p>
+    <p className="lede">{selected ? (ending === 'linger' ? fmt('You chose “{title}.” Put the phone away and let the next moment be yours.', { title: tr(selected.title) }) : fmt('You chose “{title}.” Tell each other one thing you liked, then make your own plan for another night.', { title: tr(selected.title) })) : tr('You can choose a new spark whenever you both want.')}</p>
+    <div className="debrief"><h2>{tr("What stays with you?")}</h2><p>{tr("One look, one line, or one small move. Say which one you want to remember.")}</p></div>
+    <p className="soft-note"><Check size={14} /> {tr("Nothing from this round is saved.")}</p>
   </Ending>;
 }

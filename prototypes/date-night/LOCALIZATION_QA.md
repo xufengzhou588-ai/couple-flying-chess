@@ -1,6 +1,6 @@
 # Mini games: Chinese, English, and Spanish copy standard
 
-Status: editorial standard and draft examples. The four player-facing mini games currently display English only; older text-led experiments remain in source but are hidden from the preview. No translation in this file is approved for release without the reviews below.
+Status: the four player-facing mini games now have English, Simplified Chinese, and US Spanish copy and matching male/female voice clips for internal TestFlight testing. Older text-led experiments remain in source but are hidden from the catalog. Automated key coverage and full-round play checks run in all three languages. Native speaker review and couple playtests below remain open before public release.
 
 ## Audience and intent
 

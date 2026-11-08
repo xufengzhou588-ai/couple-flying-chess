@@ -6,10 +6,10 @@ import { CoupleGameEmblem } from '../CoupleGameEmblem';
 import { RemoteRoomRole, RemoteSyncStatus } from '../../utils/remoteRoom';
 
 const miniGamePreviews = [
-  { mode: 'after-hours', title: 'The Slow Burn' },
-  { mode: 'heart-dice', title: 'Chemistry Dice' },
-  { mode: 'sketch-date', title: 'Sketch Our Date' },
-  { mode: 'date-mystery', title: 'Date Night Mystery' }
+  { mode: 'after-hours', title: { en: 'The Slow Burn', zh: '慢慢升温', es: 'A fuego lento' } },
+  { mode: 'heart-dice', title: { en: 'Chemistry Dice', zh: '情趣骰子', es: 'Dados con chispa' } },
+  { mode: 'sketch-date', title: { en: 'Sketch Our Date', zh: '画出约会', es: 'Dibuja nuestra cita' } },
+  { mode: 'date-mystery', title: { en: 'Date Night Mystery', zh: '约会谜案', es: 'Misterio en pareja' } }
 ] as const;
 
 interface HomeViewProps {
@@ -133,7 +133,7 @@ export function HomeView({
               {miniGamePreviews.map(game => (
                 <span key={game.mode} className="flex min-w-0 items-center gap-1.5 rounded-[10px] border border-[var(--cfc-border)] bg-white/[.055] px-1.5 py-1 text-[10px] font-bold leading-tight text-[var(--cfc-rose-soft)]">
                   <CoupleGameEmblem mode={game.mode} className="h-6 w-6 shrink-0" />
-                  <span>{game.title}</span>
+                  <span>{game.title[locale]}</span>
                 </span>
               ))}
             </span>

@@ -17,7 +17,12 @@ const clips = [
   'dice-steady',
   'dice-hot-streak',
   'dice-taunt-1',
-  'dice-taunt-2'
+  'dice-taunt-2',
+  'mini-start',
+  'mini-turn',
+  'mini-roll',
+  'mini-spark',
+  'mini-solved'
 ];
 
 const missing = [];
@@ -69,5 +74,5 @@ if (missing.length || invalid.length) {
   }
   process.exitCode = 1;
 } else {
-  console.log(`\nVoice pack complete. All ${present.length} local human voice clips are present${canDecodeWithAfinfo ? ', decodable,' : ''} and within the expected duration range.`);
+  console.log(`\nVoice pack complete. All ${present.length} local voice clips are present${canDecodeWithAfinfo ? ', decodable,' : ''} and within the expected duration range.`);
 }

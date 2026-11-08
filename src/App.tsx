@@ -427,9 +427,10 @@ function App() {
               onSelectTheme={handleSelectTheme}
               onOpenPremium={() => setIsPremiumPreviewOpen(true)}
               onOpenMiniGames={() => {
-                const url = import.meta.env.DEV
+                const base = import.meta.env.DEV
                   ? `${window.location.protocol}//${window.location.hostname}:5180/`
                   : '/games/';
+                const url = `${base}?lang=${state.locale}`;
                 window.location.assign(url);
               }}
               onOpenInvite={() => {

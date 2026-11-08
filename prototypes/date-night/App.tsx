@@ -9,6 +9,10 @@ import { ReadMyMind, WishAuction, DateMystery } from './more-games';
 import { ChemistryDice } from './chemistry-dice';
 import { AfterHours } from './after-hours';
 import { SketchDate } from './sketch-date';
+import { MiniLocaleProvider, miniText, useMiniI18n, type MiniLocale } from './mini-i18n';
+import { playMiniCue, playMiniVoice } from './mini-audio';
+import { AmbientSound } from '../../src/components/AmbientSound';
+import { stopCharacterVoice } from '../../src/utils/characterVoice';
 import { dateIdeas, drawFresh, games, missions, mutualIdeas, roles, sceneBeats, type Branch, type DateIdea, type Mode, type Names, type Stage, type Vibe, stageLabels, stageNotes } from './content';
 
 const flightBoardUrl = import.meta.env.VITE_FLIGHT_BOARD_URL || (import.meta.env.DEV ? `${window.location.protocol}//${window.location.hostname}:5174/` : '/');
@@ -21,35 +25,37 @@ const gameCatalog = [
 ] as const;
 
 function Home({ onChoose }: { onChoose: (mode: Mode) => void }) {
+  const { tr } = useMiniI18n();
   useScreenFocus('home');
   return <div className="home-screen">
     <section className="home-intro">
-      <div><Eyebrow><span className="small-star">✳</span> After hours · for two</Eyebrow>
-        <h1 tabIndex={-1}>Let the night<br /><em>get interesting.</em></h1>
-        <p className="intro-copy">A little heat. A little mystery. Just us.</p>
+      <div><Eyebrow><span className="small-star">✳</span> {tr('After hours · for two')}</Eyebrow>
+        <h1 tabIndex={-1}>{tr('Let the night')}<br /><em>{tr('get interesting.')}</em></h1>
+        <p className="intro-copy">{tr('A little heat. A little mystery. Just us.')}</p>
       </div>
-      <div className="evening-note"><Moon size={19} /><span>One phone.<br /><strong>Your night.</strong></span></div>
+      <div className="evening-note"><Moon size={19} /><span>{tr('One phone.')}<br /><strong>{tr('Your night.')}</strong></span></div>
     </section>
 
     <section className="game-catalog" aria-labelledby="game-catalog-title">
-      <div className="catalog-heading"><h2 id="game-catalog-title">Choose our game</h2><span>04 games · one phone</span></div>
-      <div className="catalog-grid">{gameCatalog.map(({ mode, number, kind, prompt }) => <button key={mode} className={`catalog-card catalog-card-${mode}`} type="button" aria-label={`Play ${games[mode].title}`} onClick={() => onChoose(mode)}>
+      <div className="catalog-heading"><h2 id="game-catalog-title">{tr('Choose our game')}</h2><span>{tr('04 games · one phone')}</span></div>
+      <div className="catalog-grid">{gameCatalog.map(({ mode, number, kind, prompt }) => <button key={mode} className={`catalog-card catalog-card-${mode}`} type="button" aria-label={`${tr('Play')} ${tr(games[mode].title)}`} onClick={() => onChoose(mode)}>
         <CoupleGameEmblem mode={mode} className="catalog-emblem" />
-        <span className="catalog-copy"><span className="catalog-number">{number} / {kind}</span><strong className="catalog-title">{games[mode].title}</strong><span className="catalog-prompt">{prompt}</span><span className="catalog-duration"><Clock size={13} /> {games[mode].time}</span></span>
-        <span className="catalog-play">Play <ArrowUpRight size={16} /></span>
+        <span className="catalog-copy"><span className="catalog-number">{number} / {tr(kind)}</span><strong className="catalog-title">{tr(games[mode].title)}</strong><span className="catalog-prompt">{tr(prompt)}</span><span className="catalog-duration"><Clock size={13} /> {tr(games[mode].time)}</span></span>
+        <span className="catalog-play">{tr('Play')} <ArrowUpRight size={16} /></span>
       </button>)}</div>
     </section>
 
-    <a className="board-feature" href={flightBoardUrl} aria-label="Play Flight Chess">
+    <a className="board-feature" href={flightBoardUrl} aria-label={`${tr('Play')} ${tr('Flight Chess')}`}>
       <span className="board-feature-mark"><Plane size={23} /><Heart size={11} fill="currentColor" className="board-feature-heart" /></span>
-      <span className="board-feature-copy"><small>THE ORIGINAL COUPLE FLIGHT GAME</small><strong>Flight Chess</strong><span>Roll, flirt, and follow the board together. Play on one screen or invite your partner online.</span></span>
-      <span className="board-feature-action">Play the board <ArrowUpRight size={18} /></span>
+      <span className="board-feature-copy"><small>{tr('THE ORIGINAL COUPLE FLIGHT GAME')}</small><strong>{tr('Flight Chess')}</strong><span>{tr('Roll, flirt, and follow the board together. Play on one screen or invite your partner online.')}</span></span>
+      <span className="board-feature-action">{tr('Play the board')} <ArrowUpRight size={18} /></span>
     </a>
-    <div className="home-footnote"><span><Users size={16} /> These four games use one phone. Pass it between you.</span><span>No account. No audience. Just you.</span></div>
+    <div className="home-footnote"><span><Users size={16} /> {tr('These four games use one phone. Pass it between you.')}</span><span>{tr('No account. No audience. Just you.')}</span></div>
   </div>;
 }
 
 function Setup({ mode, names, vibe, stage, onStart }: { mode: Mode; names: Names; vibe: Vibe; stage: Stage; onStart: (names: Names, vibe: Vibe, stage: Stage) => void }) {
+  const { locale, tr } = useMiniI18n();
   const [draftNames, setDraftNames] = useState<Names>(names);
   const [draftVibe, setDraftVibe] = useState<Vibe>(mode === 'after-hours' ? 'flirty' : vibe);
   const [draftStage, setDraftStage] = useState(stage);
@@ -67,20 +73,21 @@ function Setup({ mode, names, vibe, stage, onStart }: { mode: Mode; names: Names
     'sketch-date': ['Take turns drawing a date idea with your finger.', 'Your partner guesses from three possible dates.', 'Choose one sketch you would actually like to try.'],
   };
   return <section className="setup-layout">
-    <div className="setup-intro"><Eyebrow>{games[mode].category}</Eyebrow><div className="setup-title-row">{catalogGame && <CoupleGameEmblem mode={catalogGame.mode} className="setup-emblem" />}<h1 tabIndex={-1}>{games[mode].title}</h1></div><p className="lede">{games[mode].description}</p><ol className="how-to">{notes[mode].map((note, i) => <li key={note}><span>0{i + 1}</span><p>{note}</p></li>)}</ol><p className="soft-note"><Clock size={15} /> {games[mode].time} · Go at your own pace.</p></div>
+    <div className="setup-intro"><Eyebrow>{tr(games[mode].category)}</Eyebrow><div className="setup-title-row">{catalogGame && <CoupleGameEmblem mode={catalogGame.mode} className="setup-emblem" />}<h1 tabIndex={-1}>{tr(games[mode].title)}</h1></div><p className="lede">{tr(games[mode].description)}</p><ol className="how-to">{notes[mode].map((note, i) => <li key={note}><span>0{i + 1}</span><p>{tr(note)}</p></li>)}</ol><p className="soft-note"><Clock size={15} /> {tr(games[mode].time)} · {tr('Go at your own pace.')}</p></div>
     <form className="setup-form" onSubmit={event => {
       event.preventDefault();
       const clean = draftNames.map((name, i) => name.trim() || `Player ${i + 1}`) as Names;
       if (clean[0].toLowerCase() === clean[1].toLowerCase()) { clean[0] += ' (1)'; clean[1] += ' (2)'; }
+      playMiniVoice(locale, 0, 'mini-start');
       onStart(clean, draftVibe, draftStage);
     }}>
-      <h2>Make yourselves comfortable.</h2><p className="muted">Nicknames welcome. Names are optional.</p>
-      <div className="names-row">{[0, 1].map(index => <label key={index} htmlFor={`player-${index}`}>Player {index + 1}<input id={`player-${index}`} maxLength={24} autoComplete="off" placeholder={index === 0 ? 'e.g. Alex' : 'e.g. Sam'} value={draftNames[index].startsWith('Player ') ? '' : draftNames[index]} onChange={event => setDraftNames(prev => index === 0 ? [event.target.value, prev[1]] : [prev[0], event.target.value])} /></label>)}</div>
-      {mode !== 'heart-dice' && <fieldset><legend>Where are you two right now?</legend><div className="stage-options">{(['new', 'together', 'married'] as const).map(value => <label className={`stage-choice ${draftStage === value ? 'selected' : ''}`} key={value}><input type="radio" name="stage" value={value} checked={draftStage === value} onChange={() => setDraftStage(value)} /><span><strong>{stageLabels[value]}</strong><small>{stageNotes[value]}</small></span></label>)}</div></fieldset>}
-      {mode !== 'sketch-date' && mode !== 'date-mystery' && <fieldset><legend>What’s the mood?</legend><div className="vibe-options">{(['playful', 'flirty'] as const).map(value => <label className={`vibe-choice ${draftVibe === value ? 'selected' : ''}`} key={value}><input type="radio" name="vibe" value={value} checked={draftVibe === value} onChange={() => setDraftVibe(value)} /><span>{value === 'playful' ? <Sparkles size={18} /> : <Heart size={18} />}<strong>{value === 'playful' ? 'Playful' : 'Flirty'}</strong><small>{value === 'playful' ? 'Easy laughs & good stories' : 'Banter & a little chemistry'}</small></span></label>)}</div></fieldset>}
-      <div className="comfort-note"><Heart size={17} /><p>Pick a mood you both like. You can pass on anything, for any reason.</p></div>
-      <Button type="submit" className="full-width">{({ 'first-date': 'Meet your characters', mission: 'Deal our missions', 'double-yes': 'Find our shared yeses', 'heart-dice': 'Choose our comfort', 'read-my-mind': 'Start guessing', 'wish-auction': 'Open the auction', 'date-mystery': 'Open the first clue', 'after-hours': 'Find our spark', 'sketch-date': 'Start our sketches' } satisfies Record<Mode, string>)[mode]} <ArrowRight size={18} /></Button>
-      <p className="form-footnote">Your names and choices stay in this session.<br />Leaving or reloading clears the round.</p>
+      <h2>{tr('Make yourselves comfortable.')}</h2><p className="muted">{tr('Nicknames welcome. Names are optional.')}</p>
+      <div className="names-row">{[0, 1].map(index => <label key={index} htmlFor={`player-${index}`}>{tr(`Player ${index + 1}`)}<input id={`player-${index}`} maxLength={24} autoComplete="off" placeholder={index === 0 ? tr('e.g. Alex') : tr('e.g. Sam')} value={draftNames[index].startsWith('Player ') ? '' : draftNames[index]} onChange={event => setDraftNames(prev => index === 0 ? [event.target.value, prev[1]] : [prev[0], event.target.value])} /></label>)}</div>
+      {mode !== 'heart-dice' && <fieldset><legend>{tr('Where are you two right now?')}</legend><div className="stage-options">{(['new', 'together', 'married'] as const).map(value => <label className={`stage-choice ${draftStage === value ? 'selected' : ''}`} key={value}><input type="radio" name="stage" value={value} checked={draftStage === value} onChange={() => setDraftStage(value)} /><span><strong>{tr(stageLabels[value])}</strong><small>{tr(stageNotes[value])}</small></span></label>)}</div></fieldset>}
+      {mode !== 'sketch-date' && mode !== 'date-mystery' && <fieldset><legend>{tr('What’s the mood?')}</legend><div className="vibe-options">{(['playful', 'flirty'] as const).map(value => <label className={`vibe-choice ${draftVibe === value ? 'selected' : ''}`} key={value}><input type="radio" name="vibe" value={value} checked={draftVibe === value} onChange={() => setDraftVibe(value)} /><span>{value === 'playful' ? <Sparkles size={18} /> : <Heart size={18} />}<strong>{tr(value === 'playful' ? 'Playful' : 'Flirty')}</strong><small>{tr(value === 'playful' ? 'Easy laughs & good stories' : 'Banter & a little chemistry')}</small></span></label>)}</div></fieldset>}
+      <div className="comfort-note"><Heart size={17} /><p>{tr('Pick a mood you both like. You can pass on anything, for any reason.')}</p></div>
+      <Button type="submit" className="full-width">{tr(({ 'first-date': 'Meet your characters', mission: 'Deal our missions', 'double-yes': 'Find our shared yeses', 'heart-dice': 'Choose our comfort', 'read-my-mind': 'Start guessing', 'wish-auction': 'Open the auction', 'date-mystery': 'Open the first clue', 'after-hours': 'Find our spark', 'sketch-date': 'Start our sketches' } satisfies Record<Mode, string>)[mode])} <ArrowRight size={18} /></Button>
+      <p className="form-footnote">{tr('Your names and choices stay in this session.')}<br />{tr('Leaving or reloading clears the round.')}</p>
     </form>
   </section>;
 }
@@ -162,7 +169,27 @@ function DoubleYes({ names, vibe, stage, seen, onHome, onReplay }: { names: Name
   return <section className="screen-narrow match-results"><div className="ending-stamp"><Heart size={28} /></div><Eyebrow>Double Yes · The reveal</Eyebrow><h1 tabIndex={-1}>{matches.length > 0 ? <>Oh. You too?</> : <>Different moods.<br /><em>Still a good team.</em></>}</h1><p className="lede">{matches.length > 0 ? `You both liked ${matches.length === 1 ? 'this idea' : `these ${matches.length} ideas`}. Pick one to make a little date of it.` : 'No shared picks this round. Try a fresh set, choose another game, or call it a night.'}</p>{matches.length > 0 && <div className="match-list">{matches.map((idea, i) => <button key={idea.id} data-match-id={idea.id} onClick={() => { setChosen(idea); setPhase('plan'); }}><span className="match-number">{String(i + 1).padStart(2, '0')}</span><span><small>{idea.category}</small><strong>{idea.title}</strong></span><ArrowUpRight size={20} /></button>)}</div>}<p className="soft-note"><Lock size={14} /> Your other choices haven’t been revealed.</p><div className="action-stack"><Button variant={matches.length ? 'secondary' : 'primary'} onClick={onReplay}><RefreshCw size={16} /> Try a fresh set</Button><Button variant="quiet" onClick={onHome}>Choose another game</Button></div></section>;
 }
 
+function initialMiniLocale(): MiniLocale {
+  const requested = new URLSearchParams(window.location.search).get('lang');
+  if (requested === 'en' || requested === 'zh' || requested === 'es') return requested;
+  try {
+    const saved = JSON.parse(localStorage.getItem('couple-flying-chess-v3') || '{}');
+    if (saved.locale === 'en' || saved.locale === 'zh' || saved.locale === 'es') return saved.locale;
+  } catch { /* A malformed saved board state does not block the games. */ }
+  return 'en';
+}
+
 export default function App() {
+  const [locale, setLocale] = useState<MiniLocale>(initialMiniLocale);
+  const tr = (english: string) => miniText(locale, english);
+  function changeLocale(next: MiniLocale) {
+    stopCharacterVoice();
+    setLocale(next);
+    const url = new URL(window.location.href);
+    url.searchParams.set('lang', next);
+    window.history.replaceState(null, '', url);
+  }
+  useEffect(() => { document.documentElement.lang = locale === 'zh' ? 'zh-CN' : locale === 'es' ? 'es-US' : 'en-US'; }, [locale]);
   const [mode, setMode] = useState<Mode | null>(null);
   const [ready, setReady] = useState(false);
   const [names, setNames] = useState<Names>(['Player 1', 'Player 2']);
@@ -173,10 +200,10 @@ export default function App() {
   const exitRef = useRef<HTMLDialogElement>(null);
   const seenMissions = useRef(new Set<string>());
   const seenIdeas = useRef(new Set<string>());
-  function home() { setMode(null); setReady(false); setShowExit(false); }
+  function home() { stopCharacterVoice(); setMode(null); setReady(false); setShowExit(false); }
   const activeCatalogGame = gameCatalog.find(game => game.mode === mode);
   function leave() { if (ready) setShowExit(true); else home(); }
   function replay(swap = false) { if (swap) setNames(prev => [prev[1], prev[0]]); setSession(prev => prev + 1); }
   useEffect(() => { if (showExit) exitRef.current?.showModal(); else exitRef.current?.close(); }, [showExit]);
-  return <div className="app-shell"><a className="skip-link" href="#main">Skip to game</a><header className="site-header"><button className="brand" onClick={leave} aria-label="Date Night Games home"><span className={activeCatalogGame ? "brand-game-mark" : "brand-mark"}>{activeCatalogGame ? <CoupleGameEmblem mode={activeCatalogGame.mode} className="brand-game-emblem" /> : <Heart size={20} />}</span><span>Couple Flight<small>DATE NIGHT GAMES</small></span></button>{mode ? <button className="exit-link" onClick={leave}><ArrowLeft size={16} /><span>{ready ? 'Leave game' : 'All games'}</span></button> : <a className="exit-link" href={flightBoardUrl} aria-label="Back to Flight Chess"><ArrowLeft size={16} /><span>Board</span></a>}</header><main id="main">{!mode ? <Home onChoose={value => { setMode(value); setReady(false); }} /> : !ready ? <Setup mode={mode} names={names} vibe={vibe} stage={stage} onStart={(newNames, newVibe, newStage) => { setNames(newNames); setVibe(newVibe); setStage(newStage); setReady(true); setSession(prev => prev + 1); }} /> : mode === 'first-date' ? <FirstDate key={session} names={names} vibe={vibe} stage={stage} onHome={home} onReplay={() => replay(true)} /> : mode === 'mission' ? <SecretMission key={session} names={names} vibe={vibe} stage={stage} seen={seenMissions.current} onHome={home} onReplay={() => replay()} /> : mode === 'double-yes' ? <DoubleYes key={session} names={names} vibe={vibe} stage={stage} seen={seenIdeas.current} onHome={home} onReplay={() => replay()} /> : mode === 'heart-dice' ? <ChemistryDice key={session} names={names} vibe={vibe} onHome={home} onReplay={() => replay()} /> : mode === 'read-my-mind' ? <ReadMyMind key={session} names={names} vibe={vibe} stage={stage} onHome={home} onReplay={() => replay()} /> : mode === 'wish-auction' ? <WishAuction key={session} names={names} vibe={vibe} stage={stage} onHome={home} onReplay={() => replay()} /> : mode === 'date-mystery' ? <DateMystery key={session} names={names} vibe={vibe} stage={stage} onHome={home} onReplay={() => replay()} /> : mode === 'sketch-date' ? <SketchDate key={session} names={names} stage={stage} onHome={home} onReplay={() => replay()} /> : <AfterHours key={session} names={names} vibe={vibe} stage={stage} onHome={home} onReplay={() => replay()} />}</main><footer className="site-footer"><span><Ticket size={14} /> A little time, just for you two.</span><span>Go at your own pace.</span></footer><dialog ref={exitRef} onCancel={() => setShowExit(false)} onClick={event => { if (event.target === event.currentTarget) setShowExit(false); }}><div className="exit-dialog"><Eyebrow>Pause for a moment</Eyebrow><h2>Call it a night?</h2><p>This round will be cleared. Your answers aren’t saved.</p><div className="action-stack"><Button onClick={home}>Leave this round</Button><Button variant="secondary" onClick={() => setShowExit(false)} autoFocus>Keep playing</Button></div></div></dialog></div>;
+  return <MiniLocaleProvider locale={locale}><div className="app-shell" data-locale={locale} onClickCapture={event => { if (event.target instanceof Element && event.target.closest("button")) void playMiniCue("tap"); }}><a className="skip-link" href="#main">{tr("Skip to game")}</a><header className="site-header"><button className="brand" onClick={leave} aria-label={tr("Date Night Games home")}><span className={activeCatalogGame ? "brand-game-mark" : "brand-mark"}>{activeCatalogGame ? <CoupleGameEmblem mode={activeCatalogGame.mode} className="brand-game-emblem" /> : <Heart size={20} />}</span><span>Couple Flight<small>{tr("DATE NIGHT GAMES")}</small></span></button><div className="header-actions"><AmbientSound copy={{ soundOn: tr("Turn off date-night music"), soundOff: tr("Turn on date-night music") }} className="mini-ambient-toggle" /><label className="locale-control"><span className="sr-only">{tr("Language")}</span><select aria-label={tr("Language")} value={locale} onChange={event => changeLocale(event.target.value as MiniLocale)}><option value="en">EN</option><option value="zh">中文</option><option value="es">ES</option></select></label>{mode ? <button className="exit-link" onClick={leave} aria-label={tr(ready ? "Leave game" : "All games")}><ArrowLeft size={16} /><span>{tr(ready ? 'Leave game' : 'All games')}</span></button> : <a className="exit-link" href={flightBoardUrl} aria-label={tr("Back to Flight Chess")}><ArrowLeft size={16} /><span>{tr("Board")}</span></a>}</div></header><main id="main">{!mode ? <Home onChoose={value => { setMode(value); setReady(false); }} /> : !ready ? <Setup mode={mode} names={names} vibe={vibe} stage={stage} onStart={(newNames, newVibe, newStage) => { setNames(newNames); setVibe(newVibe); setStage(newStage); setReady(true); setSession(prev => prev + 1); }} /> : mode === 'first-date' ? <FirstDate key={session} names={names} vibe={vibe} stage={stage} onHome={home} onReplay={() => replay(true)} /> : mode === 'mission' ? <SecretMission key={session} names={names} vibe={vibe} stage={stage} seen={seenMissions.current} onHome={home} onReplay={() => replay()} /> : mode === 'double-yes' ? <DoubleYes key={session} names={names} vibe={vibe} stage={stage} seen={seenIdeas.current} onHome={home} onReplay={() => replay()} /> : mode === 'heart-dice' ? <ChemistryDice key={session} names={names} vibe={vibe} onHome={home} onReplay={() => replay()} /> : mode === 'read-my-mind' ? <ReadMyMind key={session} names={names} vibe={vibe} stage={stage} onHome={home} onReplay={() => replay()} /> : mode === 'wish-auction' ? <WishAuction key={session} names={names} vibe={vibe} stage={stage} onHome={home} onReplay={() => replay()} /> : mode === 'date-mystery' ? <DateMystery key={session} names={names} vibe={vibe} stage={stage} onHome={home} onReplay={() => replay()} /> : mode === 'sketch-date' ? <SketchDate key={session} names={names} stage={stage} onHome={home} onReplay={() => replay()} /> : <AfterHours key={session} names={names} vibe={vibe} stage={stage} onHome={home} onReplay={() => replay()} />}</main><footer className="site-footer"><span><Ticket size={14} /> {tr("A little time, just for you two.")}</span><span>{tr("Go at your own pace.")}</span></footer><dialog ref={exitRef} onCancel={() => setShowExit(false)} onClick={event => { if (event.target === event.currentTarget) setShowExit(false); }}><div className="exit-dialog"><Eyebrow>{tr("Pause for a moment")}</Eyebrow><h2>{tr("Call it a night?")}</h2><p>{tr("This round will be cleared. Your answers aren’t saved.")}</p><div className="action-stack"><Button onClick={home}>{tr("Leave this round")}</Button><Button variant="secondary" onClick={() => setShowExit(false)} autoFocus>{tr("Keep playing")}</Button></div></div></dialog></div></MiniLocaleProvider>;
 }

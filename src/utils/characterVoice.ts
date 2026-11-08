@@ -1,6 +1,5 @@
 import { TaskEventData } from '../types';
 import { resumeSharedAudioContext, unlockSharedAudioContext } from './audioSession';
-import { assetPath } from './assets';
 
 let lastSpokenAt = 0;
 let activeLocalVoice: AudioBufferSourceNode | null = null;
@@ -81,7 +80,8 @@ function genderForPlayer(playerId: number): VoiceGender {
 }
 
 function localVoiceCandidates(locale: TaskEventData['locale'], gender: VoiceGender, clipId: string) {
-  return [assetPath(`audio/voice/${locale}/${gender}/${clipId}.mp3`)];
+  // The board and /games/ mini-app share one audio folder at the app root.
+  return [`/audio/voice/${locale}/${gender}/${clipId}.mp3`];
 }
 
 async function tryPlayAudioSource(src: string, requestId: number) {
@@ -406,6 +406,16 @@ export function playDiceReactionVoice(line: string, playerId: number, locale: Ta
   void voicePromise.then(didPlayLocalVoice => {
     if (!didPlayLocalVoice && ENABLE_SYSTEM_TTS_FALLBACK && requestId === voiceRequestId) {
       speakLine(line, playerId, locale, requestId);
+    }
+  });
+}
+
+export function playMiniGameVoice(clipId: 'mini-start' | 'mini-turn' | 'mini-roll' | 'mini-spark' | 'mini-solved', playerId: number, locale: TaskEventData['locale'], fallbackLine: string) {
+  const voicePromise = playLocalVoiceClip(locale, playerId, clipId);
+  const requestId = voiceRequestId;
+  void voicePromise.then(didPlayLocalVoice => {
+    if (!didPlayLocalVoice && ENABLE_SYSTEM_TTS_FALLBACK && requestId === voiceRequestId) {
+      speakLine(fallbackLine, playerId, locale, requestId);
     }
   });
 }

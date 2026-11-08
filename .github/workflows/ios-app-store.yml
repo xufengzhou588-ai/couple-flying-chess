@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - testflight-1.1.1-build9
+      - testflight-1.1.1-build10
   workflow_dispatch:
     inputs:
       upload_to_app_store:
@@ -49,13 +50,15 @@ jobs:
       - name: Validate web release
         run: |
           npm run typecheck
+          npm run mini:typecheck
           npm run lint
           npm run i18n:check
+          npm run mini:i18n:check
           npm run voice:check
 
       - name: Build web app and sync iOS
         run: |
-          npm run build
+          npm run build:unified-preview
           npx cap sync ios
 
       - name: Install CocoaPods dependencies
@@ -145,7 +148,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload to App Store Connect
-        if: ${{ github.event.inputs.upload_to_app_store == 'true' || github.ref == 'refs/tags/testflight-1.1.1-build9' }}
+        if: ${{ github.event.inputs.upload_to_app_store == 'true' || github.ref == 'refs/tags/testflight-1.1.1-build9' || github.ref == 'refs/tags/testflight-1.1.1-build10' }}
         run: |
           IPA_PATH="$(find "$RUNNER_TEMP/export" -name "*.ipa" -print -quit)"
           if [ -z "$IPA_PATH" ]; then
