@@ -120,7 +120,7 @@ export function HomeView({
       {showMiniGames && (
         <button
           type="button"
-          className="home-wide-action cfc-pressable cfc-surface-strong flex w-full items-center gap-3 rounded-[20px] p-3 text-left"
+          className="home-wide-action home-mini-games-after-dark cfc-pressable cfc-surface-strong flex w-full items-center gap-3 rounded-[20px] p-3 text-left"
           onClick={onOpenMiniGames}
         >
           <span className="home-action-icon cfc-icon-tile flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--cfc-rose-soft)] text-[#321018]">

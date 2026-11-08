@@ -1744,3 +1744,33 @@ select:focus-visible,
   pointer-events: auto;
   transform: scale(1);
 }
+
+/* The mini-game doorway carries the Midnight Flirt look into Flight Chess. */
+.home-mini-games-after-dark {
+  border: 1px solid #5c284f;
+  border-left: 3px solid #ff3b94;
+  border-radius: 10px;
+  background: linear-gradient(105deg, #271126, #170e1d);
+  box-shadow: 0 0 22px #ff3b941c;
+}
+.home-mini-games-after-dark .home-action-icon {
+  border: 1px solid #ff3b94;
+  border-radius: 7px;
+  background: #300b2b;
+  color: #ff53a5;
+  box-shadow: 0 0 13px #ff3b9452;
+}
+.home-mini-games-after-dark .home-action-title { color: #fff0f7; }
+.home-mini-games-after-dark .home-action-hint { color: #c9a9c1; }
+.home-mini-games-after-dark .home-action-title + .home-action-hint + span > span {
+  border-color: #5c284f;
+  border-radius: 6px;
+  background: #2a102d;
+  color: #ffb5dc;
+}
+.home-mini-games-after-dark .home-action-title + .home-action-hint + span svg {
+  filter: drop-shadow(0 0 4px #ff3b9470);
+}
+.home-mini-games-after-dark .home-action-title + .home-action-hint + span + span { color: #d8b5ff; }
+.home-mini-games-after-dark > svg { color: #ff53a5; }
+.home-mini-games-after-dark:focus-visible { outline-color: #ffb5dc; }
