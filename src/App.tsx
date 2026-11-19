@@ -429,7 +429,7 @@ function App() {
               onOpenMiniGames={() => {
                 const base = import.meta.env.DEV
                   ? `${window.location.protocol}//${window.location.hostname}:5180/`
-                  : '/games/';
+                  : '/games/index.html';
                 const url = `${base}?lang=${state.locale}`;
                 window.location.assign(url);
               }}

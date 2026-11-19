@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 
 const baseUrl = process.env.UNIFIED_PREVIEW_URL || 'http://127.0.0.1:5181/';
-const gamesUrl = new URL('/games/', baseUrl).toString();
+const gamesUrl = new URL('/games/index.html', baseUrl).toString();
 const modes = [
   ['The Slow Burn', 'Find our spark'],
   ['Chemistry Dice', 'Choose our comfort'],
@@ -20,7 +20,7 @@ try {
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await page.getByRole('button', { name: 'EN', exact: true }).click();
   await page.getByRole('button', { name: /Date Night Games/ }).click();
-  await page.waitForURL(url => url.pathname === '/games/' && url.searchParams.get('lang') === 'en');
+  await page.waitForURL(url => url.pathname === '/games/index.html' && url.searchParams.get('lang') === 'en');
   await page.getByRole('button', { name: 'Turn on date-night music' }).click();
   await page.getByRole('button', { name: 'Turn off date-night music' }).waitFor();
   await page.getByRole('button', { name: 'Turn off date-night music' }).click();
