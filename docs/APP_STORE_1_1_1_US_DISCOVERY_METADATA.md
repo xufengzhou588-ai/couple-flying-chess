@@ -1,6 +1,6 @@
 # App Store 1.1.1 — US English discovery update
 
-Prepared for the **free** public release using the existing 1.1.1 (10) TestFlight build. The four Midnight Flirt mini games and Flight Chess must be present in the build selected for App Review. The mini games use one phone; only Flight Chess has an optional room-code mode for two devices. Do not add mainland China to storefront availability.
+Prepared for the **free** public release using the existing 1.1.1 (11) TestFlight build. The four Midnight Flirt mini games and Flight Chess must be present in the build selected for App Review. The mini games use one phone; only Flight Chess has an optional room-code mode for two devices. Do not add mainland China to storefront availability.
 
 ## Copy for App Store Connect
 
@@ -70,8 +70,8 @@ Upload these to the **US English** localization in this order. Keep existing sup
 
 ## Release gate and evidence
 
-- The local iOS project is set to marketing version 1.1.1, build 10. The GitHub Actions iOS workflow builds the unified preview and syncs it into Capacitor before packaging.
-- The current `dist` UI was used for the first two screenshot captures. Before submission, compare it with TestFlight 1.1.1 (10) on an iPhone and confirm the four-game catalog, one dice result, Flight Chess, sound, language switch, and room-code flow.
-- On 2026-11-18, App Store Connect API still returned HTTP 403: `This request requires an in-effect agreement that has not been signed or has expired.` Do not infer which agreement from that message. The account holder should inspect **Business → Agreements**; metadata upload and App Review submission require account access to recover.
+- The local iOS project is set to marketing version 1.1.1, build 11. The GitHub Actions iOS workflow built and uploaded this release; App Store Connect reports the build as `VALID`.
+- The current `dist` UI was used for the first two screenshot captures. Before submission, compare it with TestFlight 1.1.1 (11) on an iPhone and confirm the four-game catalog, one dice result, Flight Chess, sound, language switch, and room-code flow. The iPhone catalog entry no longer shows a blank screen.
+- On 2026-11-20, App Store Connect API access recovered after the account holder submitted the tax form. The 1.1.1 draft now has the US English metadata and three complete screenshots; its availability remains USA only.
 
 Apple references: [product-page fields](https://developer.apple.com/help/app-store-connect/reference/app-information/platform-version-information/), [screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/), [agreements status](https://developer.apple.com/help/app-store-connect/manage-agreements/view-agreements-status/).
