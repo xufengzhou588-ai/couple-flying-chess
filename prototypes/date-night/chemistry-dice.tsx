@@ -78,7 +78,7 @@ function describeMove(locale: MiniLocale, action: Action, part: Part) {
 }
 
 type Phase = 'pick-a' | 'pick-b' | 'roll' | 'rolling' | 'play' | 'choose' | 'end';
-type ShakeState = 'off' | 'ready' | 'denied' | 'unavailable';
+type ShakeState = 'off' | 'checking' | 'ready' | 'denied' | 'unavailable';
 
 export function ChemistryDice({ names, vibe, onHome, onReplay }: {
   names: Names; vibe: Vibe; onHome: () => void; onReplay: () => void;
@@ -183,6 +183,7 @@ export function ChemistryDice({ names, vibe, onHome, onReplay }: {
   rollRef.current = () => roll();
 
   async function enableShake() {
+    setShakeState('checking');
     if (!window.DeviceMotionEvent) { setShakeState('unavailable'); return; }
     const motion = window.DeviceMotionEvent as typeof DeviceMotionEvent & { requestPermission?: () => Promise<'granted' | 'denied'> };
     if (typeof motion.requestPermission === 'function') {
@@ -206,7 +207,7 @@ export function ChemistryDice({ names, vibe, onHome, onReplay }: {
       <p className="lede">{tr("Choose spots on your own body you would be comfortable letting your partner touch tonight.")}</p>
       <div className="body-picks">{partDeck[vibe].map(id => <button key={id} className={picks[owner].includes(id) ? 'selected' : ''} aria-pressed={picks[owner].includes(id)} onClick={() => togglePart(owner, id)}>{tr(parts[id].label)}<Heart size={15} /></button>)}</div>
       <p className="form-footnote">{tr("On their turn, your partner rolls only from your choices. You can still change your mind or pass on any move.")}</p>
-      <Button className="full-width" disabled={picks[owner].length === 0} onClick={() => setPhase(owner === 0 ? 'pick-b' : 'roll')}>{owner === 0 ? fmt('Hide & pass to {name}', { name: displayName(names[1]) }) : tr('Hide & roll together')} <ArrowRight size={17} /></Button>
+      <Button className="full-width" disabled={picks[owner].length === 0} onClick={() => { if (owner === 1) void enableShake(); setPhase(owner === 0 ? 'pick-b' : 'roll'); }}>{owner === 0 ? fmt('Hide & pass to {name}', { name: displayName(names[1]) }) : tr('Hide & roll together')} <ArrowRight size={17} /></Button>
     </Handoff>;
   }
 
@@ -235,7 +236,7 @@ export function ChemistryDice({ names, vibe, onHome, onReplay }: {
       <div className="mini-actions"><Button variant="secondary" disabled={rerolled} onClick={() => roll(true)}><RefreshCw size={16} /> {tr("Reroll both")}</Button><Button variant="quiet" onClick={() => advance(false)}> {tr("Pass this move")}</Button></div>
       <button className="heart-timer" onClick={() => setTimerRunning(previous => !previous)} disabled={seconds === 0} aria-label={tr(timerRunning ? 'Pause twenty-second timer' : 'Start twenty-second timer')}><Timer size={19} /><span>{seconds}s</span><small>{tr(seconds === 0 ? 'Time is up' : timerRunning ? 'Pause timer' : 'Optional timer')}</small></button>
       <Button className="full-width" onClick={() => advance(true)}>{tr(round === 3 ? 'Finish our round' : 'Next roll')} <ArrowRight size={18} /></Button>
-    </div> : <><Button className="full-width" disabled={phase === 'rolling'} onClick={() => roll()}><Shuffle size={18} /> {tr(phase === 'rolling' ? 'Rolling…' : 'Roll both dice')}</Button>{phase === 'roll' && (shakeState === 'off' ? <Button variant="quiet" className="shake-toggle" onClick={enableShake}>{tr('Turn on shake to roll')}</Button> : <p className="shake-hint" role="status">{tr(shakeState === 'ready' ? 'Gently shake your phone twice, or tap Roll both dice.' : 'Motion is unavailable. Tap Roll both dice instead.')}</p>)}</>}
+    </div> : phase === 'rolling' ? <p className="shake-hint" role="status">{tr('Rolling…')}</p> : shakeState === 'ready' ? <><div className="shake-prompt" role="status"><Shuffle size={28} /><strong>{tr('Shake to roll')}</strong><span>{tr('Gently shake your phone twice.')}</span></div><Button variant="quiet" className="shake-toggle" onClick={() => roll()}>{tr('Tap instead')}</Button></> : <><p className="shake-hint" role="status">{tr(shakeState === 'checking' ? 'Getting shake ready…' : 'Motion is unavailable. Tap Roll both dice instead.')}</p><Button className="full-width" onClick={() => roll()}><Shuffle size={18} /> {tr('Roll both dice')}</Button></>}
     <p className="form-footnote">{tr("Ask before touching. Either person can change the move or pass, even after rolling.")}</p>
   </section>;
 }

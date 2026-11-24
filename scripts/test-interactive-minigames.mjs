@@ -46,8 +46,7 @@ try {
     }
     for (let round = 0; round < 4; round++) {
       if (stage === 'new' && round === 0) {
-        await click('Turn on shake to roll');
-        await page.getByText('Gently shake your phone twice, or tap Roll both dice.').waitFor();
+        await page.getByText('Gently shake your phone twice.').waitFor();
         const shake = () => page.evaluate(() => {
           const event = new Event('devicemotion');
           Object.defineProperty(event, 'acceleration', { value: { x: 15, y: 0, z: 0 } });
@@ -56,7 +55,7 @@ try {
         await shake();
         await page.waitForTimeout(220);
         await shake();
-      } else await page.getByRole('button', { name: 'Roll both dice', exact: true }).dispatchEvent('click');
+      } else await page.getByRole('button', { name: /^(Tap instead|Roll both dice)$/ }).dispatchEvent('click');
       await page.locator('.chemistry-result').waitFor();
       assert.ok((await page.locator('.chemistry-result > p').innerText()).length > 20);
       const recipientChoices = stage === 'new' ? [round % 2 === 0 ? 'Cheek' : 'Hand'] : stage === 'married' ? ['Neck', 'Lips'] : ['Hand', 'Shoulder'];

@@ -454,6 +454,9 @@ dialog::backdrop { background: #09070cd9; }
 .heart-dice-stage { display: flex; justify-content: center; gap: 22px; margin: 22px 0 28px; }
 .shake-toggle { display: block; margin: 12px auto 0; }
 .shake-hint { margin: 12px 0 0; color: var(--cfc-rose-soft); text-align: center; font-size: 13px; line-height: 1.5; }
+.shake-prompt { display: grid; justify-items: center; gap: 7px; margin-top: 12px; padding: 19px 12px 15px; border: 1px solid var(--cfc-border); border-radius: var(--cfc-radius-md); background: var(--cfc-bg-elevated); color: var(--cfc-rose); text-align: center; }
+.shake-prompt strong { color: var(--cfc-text); font: italic 24px/1.2 Georgia, serif; }
+.shake-prompt span { color: var(--cfc-text-muted); font-size: 12px; }
 .heart-die-wrap { display: grid; justify-items: center; gap: 12px; }
 .heart-die-label { color: var(--cfc-rose-soft); font-size: 10px; letter-spacing: 1.6px; }
 .heart-die { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 108px; height: 108px; padding: 20px; border: 2px solid #d99a9e; border-radius: 21px; background: linear-gradient(145deg, #fff5e9, #e7c9bb); box-shadow: 0 12px 0 #6d374d, 0 18px 30px #0008; transform: rotate(-5deg); }

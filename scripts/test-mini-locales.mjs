@@ -40,7 +40,7 @@ async function playDice(page) {
     if (owner === 0) await handoff(page);
   }
   for (let i = 0; i < 4; i++) {
-    await page.locator('.heart-dice-screen .button-primary').click();
+    await page.locator('.heart-dice-screen .shake-toggle, .heart-dice-screen .button-primary').first().click();
     await page.locator('.chemistry-result').waitFor();
     await page.locator('.heart-dice-screen .button-primary').last().click();
   }
