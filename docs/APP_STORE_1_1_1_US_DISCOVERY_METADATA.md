@@ -70,7 +70,7 @@ Upload these to the **US English** localization in this order. Keep existing sup
 
 ## Release gate and evidence
 
-- The local iOS project is set to marketing version 1.1.1, build 12. The previous build 11 was uploaded and reported `VALID`; build 12 contains the Chemistry Dice choice fix and optional shake control, and is pending upload and iPhone verification.
+- The local iOS project is set to marketing version 1.1.1, build 12. GitHub Actions uploaded build 12; App Store Connect reports it as `VALID` and `IN_BETA_TESTING`. The 1.1.1 App Store draft points to build 12. iPhone verification remains pending.
 - The current `dist` UI was used for the first two screenshot captures. Before submission, compare it with TestFlight 1.1.1 (12) on an iPhone and confirm the four-game catalog, one dice result, different body part choices, shake control, Flight Chess, sound, language switch, and room-code flow. The iPhone catalog entry no longer shows a blank screen.
 - On 2026-11-20, App Store Connect API access recovered after the account holder submitted the tax form. The 1.1.1 draft now has the US English metadata and three complete screenshots; its availability remains USA only.
 
