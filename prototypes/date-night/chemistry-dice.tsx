@@ -77,7 +77,8 @@ function describeMove(locale: MiniLocale, action: Action, part: Part) {
   return `Si le apetece, dibuja un corazoncito en ${partName} con un dedo.`;
 }
 
-type Phase = 'pick-a' | 'pick-b' | 'no-match' | 'roll' | 'rolling' | 'play' | 'choose' | 'end';
+type Phase = 'pick-a' | 'pick-b' | 'roll' | 'rolling' | 'play' | 'choose' | 'end';
+type ShakeState = 'off' | 'ready' | 'denied' | 'unavailable';
 
 export function ChemistryDice({ names, vibe, onHome, onReplay }: {
   names: Names; vibe: Vibe; onHome: () => void; onReplay: () => void;
@@ -94,9 +95,11 @@ export function ChemistryDice({ names, vibe, onHome, onReplay }: {
   const [rerolled, setRerolled] = useState(false);
   const [seconds, setSeconds] = useState(20);
   const [timerRunning, setTimerRunning] = useState(false);
+  const [shakeState, setShakeState] = useState<ShakeState>('off');
   const intervalRef = useRef<number | null>(null);
   const timeoutRef = useRef<number | null>(null);
-  const shared = partDeck[vibe].filter(id => picks[0].includes(id) && picks[1].includes(id));
+  const rollRef = useRef<() => void>(() => undefined);
+  const recipient = (round + 1) % 2;
   useScreenFocus(`chemistry-${phase}-${round}`);
 
   useEffect(() => () => {
@@ -110,6 +113,40 @@ export function ChemistryDice({ names, vibe, onHome, onReplay }: {
     return () => window.clearTimeout(timer);
   }, [seconds, timerRunning]);
 
+  useEffect(() => {
+    if (phase !== 'roll' || shakeState !== 'ready') return;
+    let firstPeak = 0;
+    let lastPeak = 0;
+    let peakCount = 0;
+    let gravity: [number, number, number] | null = null;
+    const onMotion = (event: DeviceMotionEvent) => {
+      const acceleration = event.acceleration;
+      let force = 0;
+      if (acceleration?.x != null && acceleration.y != null && acceleration.z != null) {
+        force = Math.hypot(acceleration.x, acceleration.y, acceleration.z);
+      } else {
+        const raw = event.accelerationIncludingGravity;
+        if (raw?.x == null || raw.y == null || raw.z == null) return;
+        const vector: [number, number, number] = [raw.x, raw.y, raw.z];
+        if (!gravity) { gravity = vector; return; }
+        gravity = gravity.map((value, index) => value * 0.85 + vector[index] * 0.15) as [number, number, number];
+        force = Math.hypot(...vector.map((value, index) => value - gravity![index]));
+      }
+      if (force < 10) return;
+      const now = Date.now();
+      if (now - lastPeak < 180) return;
+      lastPeak = now;
+      if (now - firstPeak > 1200) { firstPeak = now; peakCount = 0; }
+      peakCount += 1;
+      if (peakCount >= 2) {
+        window.removeEventListener('devicemotion', onMotion);
+        rollRef.current();
+      }
+    };
+    window.addEventListener('devicemotion', onMotion);
+    return () => window.removeEventListener('devicemotion', onMotion);
+  }, [phase, shakeState]);
+
   function togglePart(owner: number, id: PartId) {
     setPicks(previous => {
       const next: [PartId[], PartId[]] = [[...previous[0]], [...previous[1]]];
@@ -119,7 +156,7 @@ export function ChemistryDice({ names, vibe, onHome, onReplay }: {
   }
 
   function choosePair(excludeCurrent = false): Pair {
-    const possible = actions.flatMap(action => shared.filter(id => action.allowed.includes(id)).map(id => ({ action, part: parts[id] })));
+    const possible = actions.flatMap(action => picks[recipient].filter(id => action.allowed.includes(id)).map(id => ({ action, part: parts[id] })));
     const candidates = possible.filter(item => !used.includes(`${item.action.id}:${item.part.id}`) && (!excludeCurrent || item.action.id !== pair?.action.id || item.part.id !== pair?.part.id));
     return shuffled(candidates.length ? candidates : possible.filter(item => !excludeCurrent || item.action.id !== pair?.action.id || item.part.id !== pair?.part.id))[0] || possible[0];
   }
@@ -143,6 +180,19 @@ export function ChemistryDice({ names, vibe, onHome, onReplay }: {
     }, 1100);
   }
 
+  rollRef.current = () => roll();
+
+  async function enableShake() {
+    if (!window.DeviceMotionEvent) { setShakeState('unavailable'); return; }
+    const motion = window.DeviceMotionEvent as typeof DeviceMotionEvent & { requestPermission?: () => Promise<'granted' | 'denied'> };
+    if (typeof motion.requestPermission === 'function') {
+      try {
+        if (await motion.requestPermission() !== 'granted') { setShakeState('denied'); return; }
+      } catch { setShakeState('denied'); return; }
+    }
+    setShakeState('ready');
+  }
+
   function advance(didPlay: boolean) {
     if (didPlay && pair) setPlayed(previous => [...previous, pair]);
     setTimerRunning(false);
@@ -153,19 +203,12 @@ export function ChemistryDice({ names, vibe, onHome, onReplay }: {
   if (phase === 'pick-a' || phase === 'pick-b') {
     const owner = phase === 'pick-a' ? 0 : 1;
     return <Handoff key={phase} name={names[owner]} voicePlayer={owner} title="Choose your yeses." label="Only you see your comfort choices">
-      <p className="lede">{tr("Tap the body parts you would be comfortable including tonight. Choose only for yourself.")}</p>
+      <p className="lede">{tr("Choose spots on your own body you would be comfortable letting your partner touch tonight.")}</p>
       <div className="body-picks">{partDeck[vibe].map(id => <button key={id} className={picks[owner].includes(id) ? 'selected' : ''} aria-pressed={picks[owner].includes(id)} onClick={() => togglePart(owner, id)}>{tr(parts[id].label)}<Heart size={15} /></button>)}</div>
-      <p className="form-footnote">{tr("Only parts you both chose can appear. Choosing a part is not consent to every action. Ask again before each move.")}</p>
-      <Button className="full-width" disabled={picks[owner].length === 0} onClick={() => setPhase(owner === 0 ? 'pick-b' : shared.length ? 'roll' : 'no-match')}>{owner === 0 ? fmt('Hide & pass to {name}', { name: displayName(names[1]) }) : tr('Hide & roll together')} <ArrowRight size={17} /></Button>
+      <p className="form-footnote">{tr("On their turn, your partner rolls only from your choices. You can still change your mind or pass on any move.")}</p>
+      <Button className="full-width" disabled={picks[owner].length === 0} onClick={() => setPhase(owner === 0 ? 'pick-b' : 'roll')}>{owner === 0 ? fmt('Hide & pass to {name}', { name: displayName(names[1]) }) : tr('Hide & roll together')} <ArrowRight size={17} /></Button>
     </Handoff>;
   }
-
-  if (phase === 'no-match') return <section className="screen-narrow mini-game">
-    <Eyebrow>{tr("Chemistry Dice · Your comfort comes first")}</Eyebrow>
-    <h1 tabIndex={-1}>{tr("No shared spots")} <em>{tr("tonight.")}</em></h1>
-    <p className="lede">{tr("That is completely fine. Choose again if you both want, or play something else.")}</p>
-    <div className="action-stack"><Button onClick={() => { setPicks([[], []]); setPhase('pick-a'); }}> {tr("Choose again")}</Button><Button variant="secondary" onClick={onHome}> {tr("Choose another game")}</Button></div>
-  </section>;
 
   if (phase === 'choose') return <section className="screen-narrow mini-game">
     <Eyebrow>{tr("Chemistry Dice · Four rolls")}</Eyebrow>
@@ -184,7 +227,7 @@ export function ChemistryDice({ names, vibe, onHome, onReplay }: {
   return <section className="screen-narrow mini-game heart-dice-screen">
     <Eyebrow><Sparkles size={13} /> {tr("Chemistry Dice")}</Eyebrow>
     <h1 tabIndex={-1}>{phase === 'play' ? <>{tr("Your move,")}<br /><em>{displayName(names[round % 2])}.</em></> : <>{tr("Roll for a")}<br /><em>{tr("little spark.")}</em></>}</h1>
-    <p className="lede">{phase === 'play' ? tr('One die picked the action. The other picked a spot you both chose.') : fmt('{name} leads this round. Roll for an action and a body part.', { name: displayName(names[round % 2]) })}</p>
+    <p className="lede">{phase === 'play' ? tr('One die picked the action. The other picked a spot your partner chose for themselves.') : fmt('{name} leads this round. Roll for an action and a spot {partner} chose.', { name: displayName(names[round % 2]), partner: displayName(names[recipient]) })}</p>
     <Progress current={round + 1} total={4} label="Roll" />
     <div className="heart-dice-stage"><Die face={faces[0]} label="ACTION" rolling={phase === 'rolling'} /><Die face={faces[1]} label="BODY PART" rolling={phase === 'rolling'} /></div>
     {phase === 'play' && pair ? <div aria-live="polite">
@@ -192,7 +235,7 @@ export function ChemistryDice({ names, vibe, onHome, onReplay }: {
       <div className="mini-actions"><Button variant="secondary" disabled={rerolled} onClick={() => roll(true)}><RefreshCw size={16} /> {tr("Reroll both")}</Button><Button variant="quiet" onClick={() => advance(false)}> {tr("Pass this move")}</Button></div>
       <button className="heart-timer" onClick={() => setTimerRunning(previous => !previous)} disabled={seconds === 0} aria-label={tr(timerRunning ? 'Pause twenty-second timer' : 'Start twenty-second timer')}><Timer size={19} /><span>{seconds}s</span><small>{tr(seconds === 0 ? 'Time is up' : timerRunning ? 'Pause timer' : 'Optional timer')}</small></button>
       <Button className="full-width" onClick={() => advance(true)}>{tr(round === 3 ? 'Finish our round' : 'Next roll')} <ArrowRight size={18} /></Button>
-    </div> : <Button className="full-width" disabled={phase === 'rolling'} onClick={() => roll()}><Shuffle size={18} /> {tr(phase === 'rolling' ? 'Rolling…' : 'Roll both dice')}</Button>}
+    </div> : <><Button className="full-width" disabled={phase === 'rolling'} onClick={() => roll()}><Shuffle size={18} /> {tr(phase === 'rolling' ? 'Rolling…' : 'Roll both dice')}</Button>{phase === 'roll' && (shakeState === 'off' ? <Button variant="quiet" className="shake-toggle" onClick={enableShake}>{tr('Turn on shake to roll')}</Button> : <p className="shake-hint" role="status">{tr(shakeState === 'ready' ? 'Gently shake your phone twice, or tap Roll both dice.' : 'Motion is unavailable. Tap Roll both dice instead.')}</p>)}</>}
     <p className="form-footnote">{tr("Ask before touching. Either person can change the move or pass, even after rolling.")}</p>
   </section>;
 }

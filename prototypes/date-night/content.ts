@@ -17,7 +17,7 @@ export const games: Record<Mode, { title: string; category: string; description:
     title: 'Double Yes', category: 'A little discovery', time: '5–10 min',
     description: 'Pick what sounds fun. Find the ideas you both secretly love.',
   },
-  'heart-dice': { title: 'Chemistry Dice', category: 'A little heat', time: '5–8 min', description: 'One die picks the action. One picks a spot you both chose. See where the spark lands.' },
+  'heart-dice': { title: 'Chemistry Dice', category: 'A little heat', time: '5–8 min', description: 'One die picks the action. One picks a spot your partner chose for themselves. See where the spark lands.' },
   'read-my-mind': { title: 'Read My Mind', category: 'A little discovery', time: '6–10 min', description: 'Guess what your person would pick. The best part is the story after.' },
   'wish-auction': { title: 'Wish Auction', category: 'A little negotiation', time: '8–12 min', description: 'Spend pretend tokens on tiny dates you both actually want.' },
   'date-mystery': { title: 'Date Night Mystery', category: 'A little teamwork', time: '8–12 min', description: 'Two private clues. One shared answer. Solve a night out together.' },

@@ -65,7 +65,7 @@ function Setup({ mode, names, vibe, stage, onStart }: { mode: Mode; names: Names
     'first-date': ['Choose your names and the mood.', 'Read your roles privately, then act out four short beats.', 'Borrow a line whenever you want. No acting skills needed.'],
     mission: ['Read one secret assignment each.', 'Chat, hang out, and try your mission. Keep it kind.', 'Guess each other’s assignments before the big reveal.'],
     'double-yes': ['Take turns picking ideas on your own.', 'Only ideas you both say yes to are revealed.', 'Choose one shared idea and try its tiny date plan.'],
-    'heart-dice': ['Each privately chooses comfortable body parts.', 'Roll one die for an action and one for a shared body part.', 'Try the move, reroll once, or pass whenever you want.'],
+    'heart-dice': ['Each privately chooses comfortable spots on their own body.', 'Roll one die for an action and one for a spot chosen by the receiving partner.', 'Try the move, reroll once, or pass whenever you want.'],
     'read-my-mind': ['One of you privately picks an answer.', 'The other privately guesses the pick.', 'Reveal, talk about it, and switch roles.'],
     'wish-auction': ['Each start with five pretend tokens.', 'Bid privately on four tiny date ideas.', 'Only mutual bids spend tokens. Save what you both like.'],
     'date-mystery': ['Each read a private clue.', 'Share your clues out loud.', 'Solve three scenes together. Wrong guesses unlock a hint.'],

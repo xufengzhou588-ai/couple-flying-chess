@@ -18,8 +18,8 @@ async function start(title, label, stage) {
   await page.getByLabel('Player 1', { exact: true }).fill('Alex');
   await page.getByLabel('Player 2', { exact: true }).fill('Sam');
   const stageName = { new: 'Just started dating', together: 'Together a while', married: 'Married' }[stage];
-  if (title !== 'Chemistry Dice') await page.getByRole('radio', { name: new RegExp(stageName) }).check();
-  if (title === 'Chemistry Dice' && stage === 'married') await page.getByRole('radio', { name: /Flirty/ }).check();
+  if (title !== 'Chemistry Dice') await page.getByRole('radio', { name: new RegExp(stageName) }).check({ force: true });
+  if (title === 'Chemistry Dice' && stage === 'married') await page.getByRole('radio', { name: /Flirty/ }).check({ force: true });
   await click(label);
 }
 
@@ -34,21 +34,33 @@ try {
       await click('I’m Sam');
       await page.getByRole('button', { name: 'Cheek', exact: true }).click();
       await click('Hide & roll together');
-      await page.getByRole('heading', { name: 'No shared spots tonight.' }).waitFor();
-      await click('Choose again');
+      await page.getByRole('heading', { name: 'Roll for a little spark.' }).waitFor();
+    } else {
+      const chosenParts = stage === 'married' ? ['Neck', 'Lips'] : ['Hand', 'Shoulder'];
+      await click('I’m Alex');
+      for (const part of chosenParts) await page.getByRole('button', { name: part, exact: true }).click();
+      await click('Hide & pass to Sam');
+      await click('I’m Sam');
+      for (const part of chosenParts) await page.getByRole('button', { name: part, exact: true }).click();
+      await click('Hide & roll together');
     }
-    const chosenParts = stage === 'married' ? ['Neck', 'Lips'] : ['Hand', 'Shoulder'];
-    await click('I’m Alex');
-    for (const part of chosenParts) await page.getByRole('button', { name: part, exact: true }).click();
-    await click('Hide & pass to Sam');
-    await click('I’m Sam');
-    for (const part of chosenParts) await page.getByRole('button', { name: part, exact: true }).click();
-    await click('Hide & roll together');
     for (let round = 0; round < 4; round++) {
-      await page.getByRole('button', { name: 'Roll both dice', exact: true }).dispatchEvent('click');
+      if (stage === 'new' && round === 0) {
+        await click('Turn on shake to roll');
+        await page.getByText('Gently shake your phone twice, or tap Roll both dice.').waitFor();
+        const shake = () => page.evaluate(() => {
+          const event = new Event('devicemotion');
+          Object.defineProperty(event, 'acceleration', { value: { x: 15, y: 0, z: 0 } });
+          window.dispatchEvent(event);
+        });
+        await shake();
+        await page.waitForTimeout(220);
+        await shake();
+      } else await page.getByRole('button', { name: 'Roll both dice', exact: true }).dispatchEvent('click');
       await page.locator('.chemistry-result').waitFor();
       assert.ok((await page.locator('.chemistry-result > p').innerText()).length > 20);
-      assert.ok(chosenParts.includes(await page.locator('.body-map strong').innerText()));
+      const recipientChoices = stage === 'new' ? [round % 2 === 0 ? 'Cheek' : 'Hand'] : stage === 'married' ? ['Neck', 'Lips'] : ['Hand', 'Shoulder'];
+      assert.ok(recipientChoices.includes(await page.locator('.body-map strong').innerText()));
       if (round === 0) {
         const oldPair = await page.locator('.chemistry-pair').textContent();
         await page.getByRole('button', { name: 'Reroll both' }).dispatchEvent('click');
@@ -70,7 +82,7 @@ try {
     assert.equal(await page.locator('.dice-favorites button').count(), 3, 'Passed move stays off the favorites list');
     await page.locator('.dice-favorites button').first().click();
     await page.getByText('Nothing from this round is saved.').waitFor();
-    console.log(`Chemistry Dice ${stage}: mutual body-part choices, four rolls, reroll, timer, favorite`);
+    console.log(`Chemistry Dice ${stage}: recipient choices, four rolls, reroll, timer, favorite`);
 
     await start('Sketch Our Date', 'Start our sketches', stage);
     for (let round = 0; round < 3; round++) {

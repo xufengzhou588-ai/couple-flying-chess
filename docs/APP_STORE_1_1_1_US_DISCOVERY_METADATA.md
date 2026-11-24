@@ -1,6 +1,6 @@
 # App Store 1.1.1 — US English discovery update
 
-Prepared for the **free** public release using the existing 1.1.1 (11) TestFlight build. The four Midnight Flirt mini games and Flight Chess must be present in the build selected for App Review. The mini games use one phone; only Flight Chess has an optional room-code mode for two devices. Do not add mainland China to storefront availability.
+Prepared for the **free** public release using the 1.1.1 (12) TestFlight build after iPhone verification. The four Midnight Flirt mini games and Flight Chess must be present in the build selected for App Review. The mini games use one phone; only Flight Chess has an optional room-code mode for two devices. Do not add mainland China to storefront availability.
 
 ## Copy for App Store Connect
 
@@ -39,7 +39,7 @@ Flight Chess — Take turns around a playful board and see which challenge comes
 
 The Slow Burn — Privately pick a spark you both feel good about, then play out a short scene together.
 
-Chemistry Dice — One die picks an action. The other picks a body part you both chose. Roll, tease, reroll, or pass.
+Chemistry Dice — One die picks an action. The other picks a body part chosen by the partner receiving the move. Roll, tease, reroll, or pass.
 
 Sketch Our Date — Draw an idea on the screen, let your partner guess, then choose a date you would actually try.
 
@@ -70,8 +70,8 @@ Upload these to the **US English** localization in this order. Keep existing sup
 
 ## Release gate and evidence
 
-- The local iOS project is set to marketing version 1.1.1, build 11. The GitHub Actions iOS workflow built and uploaded this release; App Store Connect reports the build as `VALID`.
-- The current `dist` UI was used for the first two screenshot captures. Before submission, compare it with TestFlight 1.1.1 (11) on an iPhone and confirm the four-game catalog, one dice result, Flight Chess, sound, language switch, and room-code flow. The iPhone catalog entry no longer shows a blank screen.
+- The local iOS project is set to marketing version 1.1.1, build 12. The previous build 11 was uploaded and reported `VALID`; build 12 contains the Chemistry Dice choice fix and optional shake control, and is pending upload and iPhone verification.
+- The current `dist` UI was used for the first two screenshot captures. Before submission, compare it with TestFlight 1.1.1 (12) on an iPhone and confirm the four-game catalog, one dice result, different body part choices, shake control, Flight Chess, sound, language switch, and room-code flow. The iPhone catalog entry no longer shows a blank screen.
 - On 2026-11-20, App Store Connect API access recovered after the account holder submitted the tax form. The 1.1.1 draft now has the US English metadata and three complete screenshots; its availability remains USA only.
 
 Apple references: [product-page fields](https://developer.apple.com/help/app-store-connect/reference/app-information/platform-version-information/), [screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/), [agreements status](https://developer.apple.com/help/app-store-connect/manage-agreements/view-agreements-status/).
