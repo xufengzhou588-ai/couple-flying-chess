@@ -65,6 +65,7 @@ em { font-weight: inherit; }
 .brand-mark { width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid var(--cfc-amber); border-radius: 14px; color: var(--cfc-amber); }
 .header-note, .exit-link { display: flex; align-items: center; gap: 9px; color: var(--cfc-text-muted); font-size: 12px; white-space: nowrap; }
 .exit-link { padding: 10px 0 10px 14px; border: 0; background: none; }
+.mini-quick-back { display: none; }
 .header-note svg { color: var(--cfc-rose); }
 .skip-link { position: fixed; z-index: 20; top: -100px; left: 20px; padding: 12px; color: var(--cfc-ink); background: var(--cfc-paper); }
 .skip-link:focus { top: 12px; }
@@ -779,9 +780,12 @@ body { background: radial-gradient(circle at 76% 0%, #4d0f43 0, transparent 34%)
   .catalog-card:hover, .board-feature:hover, .button-secondary:hover, .round-link:hover { border-color: #ff53a5; filter: brightness(1.08); }
 }
 @media (max-width: 650px) {
-  .site-header { min-height: 72px; gap: 8px; }
+  .site-header { min-height: calc(72px + env(safe-area-inset-top)); padding-top: env(safe-area-inset-top); gap: 8px; }
+  .mini-quick-back { position: fixed; z-index: 90; left: max(14px, env(safe-area-inset-left)); bottom: calc(14px + env(safe-area-inset-bottom)); display: flex; align-items: center; justify-content: center; gap: 7px; min-width: 48px; min-height: 48px; padding: 10px 13px; border: 1px solid var(--cfc-border-strong); border-radius: 999px; background: #34152f; color: var(--cfc-text); box-shadow: 0 8px 26px #08020bc9; font-size: 11px; font-weight: 700; }
+  .mini-quick-back:focus-visible { outline: 3px solid var(--cfc-focus); outline-offset: 3px; }
+  .mini-game, .private-screen, .ending, .setup-layout { padding-bottom: calc(88px + env(safe-area-inset-bottom)); }
   .header-actions { gap: 7px; }
-  .exit-link { padding-left: 0; font-size: 11px; }
+  .exit-link { min-width: 44px; min-height: 44px; justify-content: center; padding-left: 0; font-size: 11px; }
   .locale-control select { min-height: 36px; }
   .brand { min-width: 0; font-size: 17px; }
   .home-screen .home-intro { padding: 29px 0 17px; }

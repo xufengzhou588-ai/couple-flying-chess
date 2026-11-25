@@ -47,6 +47,7 @@ try {
     for (let round = 0; round < 4; round++) {
       if (stage === 'new' && round === 0) {
         await page.getByText('Gently shake your phone twice.').waitFor();
+        await page.waitForTimeout(100);
         const shake = () => page.evaluate(() => {
           const event = new Event('devicemotion');
           Object.defineProperty(event, 'acceleration', { value: { x: 15, y: 0, z: 0 } });
@@ -125,8 +126,17 @@ try {
   await page.setViewportSize({ width: 320, height: 640 });
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await noOverflow();
+  await click('Play Chemistry Dice');
+  await page.locator('.mini-quick-back').waitFor({ state: 'visible' });
+  await page.locator('.mini-quick-back').click();
+  await page.getByRole('heading', { name: 'Choose our game' }).waitFor();
+  await start('Chemistry Dice', 'Choose our comfort', 'new');
+  await page.locator('.mini-quick-back').click();
+  await page.getByRole('heading', { name: 'Call it a night?' }).waitFor();
+  await click('Keep playing');
+  await page.locator('.handoff').waitFor();
   assert.deepEqual(errors, []);
-  console.log('Interactive mini-games passed at 390px and 320px without page errors');
+  console.log('Interactive mini-games and reachable back controls passed at 390px and 320px without page errors');
 } finally {
   await browser.close();
 }

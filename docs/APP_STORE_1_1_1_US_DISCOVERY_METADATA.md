@@ -1,6 +1,6 @@
 # App Store 1.1.1 — US English discovery update
 
-Prepared for the **free** public release using the 1.1.1 (14) TestFlight build after iPhone verification. The four Midnight Flirt mini games and Flight Chess must be present in the build selected for App Review. The mini games use one phone; only Flight Chess has an optional room-code mode for two devices. Do not add mainland China to storefront availability.
+Prepared for the **free** public release using the 1.1.1 (15) TestFlight build after iPhone verification. The four Midnight Flirt mini games and Flight Chess must be present in the build selected for App Review. The mini games use one phone; only Flight Chess has an optional room-code mode for two devices. Do not add mainland China to storefront availability.
 
 ## Copy for App Store Connect
 
@@ -70,8 +70,8 @@ Upload these to the **US English** localization in this order. Keep existing sup
 
 ## Release gate and evidence
 
-- The local iOS project is set to marketing version 1.1.1, build 14. The two dice games now show their updated faces; Flight Chess accepts direct shaking, animates a die landing on the board, and plays a timed landing sound. Confirm build 14 is `VALID` and `IN_BETA_TESTING` before iPhone verification.
-- Before submission, compare the screenshots with TestFlight 1.1.1 (14) on an iPhone and confirm the four-game catalog, one dice result, different body part choices, direct shake control in both dice games, Flight Chess landing animation and sound, language switch, and room-code flow. The iPhone catalog entry no longer shows a blank screen.
+- The local iOS project is set to marketing version 1.1.1, build 15. Build 15 adds an always reachable mobile back button and iPhone safe-area spacing to the mini games. Build 14 validated the dice changes; the visual replacement for Chemistry Dice is under design review and is not part of build 15.
+- Before submission, compare the screenshots with the final TestFlight build on an iPhone and confirm the four-game catalog, one dice result, different body part choices, direct shake control in both dice games, Flight Chess landing animation and sound, language switch, and room-code flow. Confirm the chosen Chemistry Dice art matches its result text before submitting for App Review.
 - On 2026-11-20, App Store Connect API access recovered after the account holder submitted the tax form. The 1.1.1 draft now has the US English metadata and three complete screenshots; its availability remains USA only.
 
 Apple references: [product-page fields](https://developer.apple.com/help/app-store-connect/reference/app-information/platform-version-information/), [screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/), [agreements status](https://developer.apple.com/help/app-store-connect/manage-agreements/view-agreements-status/).
