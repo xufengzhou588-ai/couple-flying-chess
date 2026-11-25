@@ -64,7 +64,8 @@ export const t = {
       night: '夜色'
     },
     turn: '回合',
-    rollHint: '点击骰子前进，落到心动格翻挑战卡',
+    rollHint: '摇一摇手机，或点骰子前进。落到心动格就翻挑战卡。',
+    diceResultLabel: '骰子落在 {value} 点',
     position: '位置',
     routeName: '心动航线',
     start: '起',
@@ -404,7 +405,8 @@ export const t = {
       night: 'After Dark'
     },
     turn: 'Turn',
-    rollHint: 'Roll the dice. Try not to look nervous.',
+    rollHint: 'Shake your phone or tap the dice. The board is waiting.',
+    diceResultLabel: 'The die landed on {value}',
     position: 'Spot',
     routeName: 'Flirt Track',
     start: 'Start',
@@ -744,7 +746,8 @@ export const t = {
       night: 'Noche'
     },
     turn: 'Turno',
-    rollHint: 'Tira el dado. Intenta no ponerte nervioso.',
+    rollHint: 'Agita el móvil o toca el dado. El tablero te espera.',
+    diceResultLabel: 'El dado cayó en {value}',
     position: 'Casilla',
     routeName: 'Ruta coqueta',
     start: 'Inicio',

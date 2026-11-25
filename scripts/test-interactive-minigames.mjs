@@ -58,6 +58,9 @@ try {
       } else await page.getByRole('button', { name: /^(Tap instead|Roll both dice)$/ }).dispatchEvent('click');
       await page.locator('.chemistry-result').waitFor();
       assert.ok((await page.locator('.chemistry-result > p').innerText()).length > 20);
+      assert.equal(await page.locator('.heart-die-wrap').first().locator('.heart-die-caption').innerText(), await page.locator('.chemistry-pair strong').first().innerText());
+      assert.equal(await page.locator('.heart-die-wrap').last().locator('.heart-die-caption').innerText(), await page.locator('.body-map strong').innerText());
+      assert.equal(await page.locator('.heart-die svg').count(), 2);
       const recipientChoices = stage === 'new' ? [round % 2 === 0 ? 'Cheek' : 'Hand'] : stage === 'married' ? ['Neck', 'Lips'] : ['Hand', 'Shoulder'];
       assert.ok(recipientChoices.includes(await page.locator('.body-map strong').innerText()));
       if (round === 0) {

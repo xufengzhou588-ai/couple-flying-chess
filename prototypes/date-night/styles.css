@@ -457,12 +457,19 @@ dialog::backdrop { background: #09070cd9; }
 .shake-prompt { display: grid; justify-items: center; gap: 7px; margin-top: 12px; padding: 19px 12px 15px; border: 1px solid var(--cfc-border); border-radius: var(--cfc-radius-md); background: var(--cfc-bg-elevated); color: var(--cfc-rose); text-align: center; }
 .shake-prompt strong { color: var(--cfc-text); font: italic 24px/1.2 Georgia, serif; }
 .shake-prompt span { color: var(--cfc-text-muted); font-size: 12px; }
-.heart-die-wrap { display: grid; justify-items: center; gap: 12px; }
+.heart-die-wrap { display: grid; justify-items: center; align-content: start; gap: 9px; width: 120px; }
 .heart-die-label { color: var(--cfc-rose-soft); font-size: 10px; letter-spacing: 1.6px; }
-.heart-die { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 108px; height: 108px; padding: 20px; border: 2px solid #d99a9e; border-radius: 21px; background: linear-gradient(145deg, #fff5e9, #e7c9bb); box-shadow: 0 12px 0 #6d374d, 0 18px 30px #0008; transform: rotate(-5deg); }
+.heart-die { display: grid; place-items: center; width: 108px; height: 108px; padding: 10px; border: 2px solid #d99a9e; border-radius: 21px; background: linear-gradient(145deg, #fff5e9, #e7c9bb); box-shadow: 0 12px 0 #6d374d, 0 18px 30px #0008; transform: rotate(-5deg); }
 .heart-die-wrap:nth-child(2) .heart-die { transform: rotate(6deg); }
-.heart-die i { border-radius: 50%; background: #653544; opacity: 0; }
-.heart-die i.is-visible { opacity: 1; }
+.heart-die svg { display: block; width: 100%; height: 100%; }
+.heart-die-caption { min-height: 2.5em; max-width: 120px; color: var(--cfc-text); font-size: 11px; line-height: 1.25; text-align: center; overflow-wrap: anywhere; }
+.dice-art-ground { fill: none; stroke: #f6bce0; stroke-width: 2; stroke-linecap: round; }
+.dice-art-person { fill: #27102d; }
+.dice-art-arm { fill: none; stroke: #27102d; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+.dice-art-gesture { fill: none; stroke: #ffe2ab; stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+.dice-art-heart, .dice-art-spark { fill: #ffe2ab; }
+.dice-art-figure { fill: none; stroke: #27102d; stroke-width: 3.6; stroke-linecap: round; stroke-linejoin: round; }
+.dice-art-glow { fill: #ffe2ab55; stroke: #ffe2ab; stroke-width: 1.5; }
 .heart-die-wrap.is-rolling .heart-die { animation: tumble .22s linear infinite alternate; }
 @keyframes tumble { to { transform: translateY(-9px) rotate(13deg) scale(1.06); } }
 .heart-move-card { min-height: 160px; }
@@ -562,7 +569,8 @@ dialog::backdrop { background: #09070cd9; }
   .mini-actions .button { flex: 1; }
   .answer-reveal strong { font-size: 17px; }
   .heart-dice-stage { gap: 14px; }
-  .heart-die { width: 88px; height: 88px; padding: 16px; gap: 6px; }
+  .heart-die-wrap { width: 100px; }
+  .heart-die { width: 88px; height: 88px; padding: 7px; }
   .sketch-gallery button { grid-template-columns: 96px minmax(0, 1fr); }
   .sketch-gallery img { width: 96px; }
   .sketch-gallery span { font-size: 15px; }
@@ -759,7 +767,6 @@ body { background: radial-gradient(circle at 76% 0%, #4d0f43 0, transparent 34%)
 .card-label svg, .paper-link, .secret-goal svg { color: #ff53a5; }
 .secret-goal, .paper-rule, .after-hours-callback, .chemistry-result > p { border-color: #75305e; }
 .heart-die { border-color: #ff53a5; border-radius: 10px; background: linear-gradient(145deg, #c84d9a, #5f1d65); box-shadow: 0 9px 0 #300b2b, 0 10px 26px #ff3b9440; }
-.heart-die i { background: #170b20; }
 .body-map { border-color: #91356f; border-radius: 7px; background: #2b122e; }
 .body-map svg { stroke: #ffb5dc; }
 .body-map .body-map-marker { fill: #ff3b94; stroke: #63204f; }

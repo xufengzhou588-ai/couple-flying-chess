@@ -13,6 +13,7 @@ import {
 import { RemoteRoomRole, RemoteSyncStatus } from '../../utils/remoteRoom';
 import { calculateNewPosition, rollDice } from '../../utils/gameLogic';
 import { playDiceSequence } from '../../utils/diceSound';
+import { listenForShake, requestShakePermission } from '../../utils/shake';
 import { assetPath } from '../../utils/assets';
 import {
   getDiceReaction,
@@ -88,6 +89,14 @@ export function GameView({
   const reachedMilestonesRef = useRef(new Set<number>());
   const highRollStreaksRef = useRef([0, 0]);
   const seenRemoteRollIdRef = useRef<string | null>(null);
+  const heardRemoteRollIdRef = useRef<string | null>(null);
+  const rollInFlightRef = useRef(false);
+
+  useEffect(() => {
+    if (!lastDiceRoll || canRoll || heardRemoteRollIdRef.current === lastDiceRoll.id) return;
+    heardRemoteRollIdRef.current = lastDiceRoll.id;
+    if (Date.now() - lastDiceRoll.createdAt < 3000) void playDiceSequence(1.38);
+  }, [canRoll, lastDiceRoll]);
 
   useEffect(() => {
     if (!lastDiceRoll || canRoll || isRolling) return;
@@ -113,13 +122,15 @@ export function GameView({
   }, [canRoll, currentTurn, lastDiceRoll]);
 
   const handleRoll = useCallback(() => {
-    if (!canRoll || isRolling || isMoving || diceResult) return;
+    if (!canRoll || isRolling || isMoving || diceResult || rollInFlightRef.current) return;
 
+    rollInFlightRef.current = true;
     onSetRolling(true);
     unlockCharacterVoice(locale);
+    void requestShakePermission();
     const result = rollDice();
     onDiceRoll(currentTurn, result);
-    void playDiceSequence();
+    void playDiceSequence(1.38);
     navigator.vibrate?.(24);
 
     setTimeout(() => {
@@ -144,9 +155,15 @@ export function GameView({
     }, 1000);
   }, [canRoll, isRolling, isMoving, diceResult, onSetRolling, onDiceRoll, locale, currentTurn]);
 
+  useEffect(() => {
+    if (!canRoll || isRolling || isMoving || diceResult) return;
+    return listenForShake(handleRoll);
+  }, [canRoll, isRolling, isMoving, diceResult, handleRoll]);
+
   const handleRollComplete = useCallback(() => {
     if (!diceResult) return;
 
+    rollInFlightRef.current = false;
     const landingStep = calculateNewPosition(players[currentTurn].step, diceResult);
     const startingStep = players[currentTurn].step;
     setIsMoving(true);
@@ -294,6 +311,13 @@ export function GameView({
             copy={copy}
             reaction={reaction}
           />
+          {(isRolling || (!!diceResult && !isMoving)) && (
+            <div className={`board-dice-layer pointer-events-none absolute inset-0 z-30 flex items-center justify-center ${isRolling ? 'is-airborne' : 'has-landed'}`} data-testid="board-dice-layer" aria-hidden="true">
+              <span className="board-dice-ground-shadow" />
+              <span className="board-dice-flight"><Dice isRolling={isRolling} result={diceResult} onRollComplete={canRoll ? handleRollComplete : undefined} /></span>
+            </div>
+          )}
+          <span className="sr-only" role="status" aria-live="polite">{diceResult ? copy.diceResultLabel.replace('{value}', String(diceResult)) : ''}</span>
           {reaction && (
             <div className="pointer-events-none absolute left-1/2 top-[92px] z-40 w-[82%] -translate-x-1/2 animate-[reaction-pop_2.2s_ease_both] rounded-[20px] border border-[var(--cfc-border-strong)] bg-[rgba(23,13,23,0.94)] px-4 py-3 text-center shadow-2xl backdrop-blur-xl">
               <div className="text-sm font-black text-[var(--cfc-amber)]">{reaction.title}</div>
@@ -352,9 +376,8 @@ export function GameView({
               aria-label={canRoll ? copy.rollHint : rollLockedHint}
             >
               <Dice
-                isRolling={isRolling}
-                result={diceResult}
-                onRollComplete={canRoll ? handleRollComplete : undefined}
+                isRolling={false}
+                result={null}
               />
             </button>
           </div>

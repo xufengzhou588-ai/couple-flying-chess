@@ -31,7 +31,7 @@ function scheduleClack(
   source.stop(start + 0.07);
 }
 
-export async function playDiceSequence() {
+export async function playDiceSequence(impactDelaySeconds = 1) {
   const context = await unlockSharedAudioContext();
   if (!context) return;
 
@@ -45,7 +45,7 @@ export async function playDiceSequence() {
     scheduleClack(context, master, noise, now + offset, 0.24 - index * 0.01, 1050 + Math.random() * 1500);
   });
 
-  const impactAt = now + 1;
+  const impactAt = now + impactDelaySeconds;
   const thump = context.createOscillator();
   const thumpGain = context.createGain();
   thump.type = 'sine';

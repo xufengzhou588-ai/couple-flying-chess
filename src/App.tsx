@@ -22,6 +22,8 @@ import { AppMessageModal } from './components/modals/AppMessageModal';
 import { localeLabels, t } from './i18n';
 import { getFinalRewards } from './data/gameExperience';
 import { assetPath } from './utils/assets';
+import { requestShakePermission } from './utils/shake';
+import { unlockCharacterVoice } from './utils/characterVoice';
 import { releaseFeatures } from './config/release';
 import {
   connectRemoteRoom,
@@ -342,6 +344,8 @@ function App() {
       showInfo(copy.selectedPrompt);
       return false;
     }
+    unlockCharacterVoice(state.locale);
+    void requestShakePermission();
     taskBonusSecondsRef.current = 0;
     setActiveTask(null);
     setMilestoneEvent(null);
@@ -561,7 +565,11 @@ function App() {
         localPlayerId={remotePlayerId}
         partnerPlayerId={partnerPlayerId}
         canStart={canStartGame}
-        onSelectPlayer={setRemotePlayerId}
+        onSelectPlayer={playerId => {
+          unlockCharacterVoice(state.locale);
+          void requestShakePermission();
+          setRemotePlayerId(playerId);
+        }}
         onSelectTheme={handleSelectTheme}
         onStart={() => {
           if (handleStartGame()) {

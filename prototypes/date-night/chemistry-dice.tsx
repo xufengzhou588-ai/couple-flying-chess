@@ -5,9 +5,11 @@ import { shuffled, type Names, type Vibe } from './content';
 import { useScreenFocus } from './useScreenFocus';
 import { useMiniI18n, type MiniLocale } from './mini-i18n';
 import { playDiceSequence } from '../../src/utils/diceSound';
+import { listenForShake, requestShakePermission } from '../../src/utils/shake';
 import { playMiniVoice } from './mini-audio';
+import { ActionGlyph, BodyGlyph, type DicePart } from './dice-art';
 
-type PartId = 'hand' | 'cheek' | 'forehead' | 'shoulder' | 'forearm' | 'upper-back' | 'neck' | 'waist' | 'lips';
+type PartId = DicePart;
 type Part = { id: PartId; label: string; x: number; y: number };
 type Action = { id: string; title: string; allowed: PartId[]; describe: (part: Part) => string };
 type Pair = { action: Action; part: Part };
@@ -38,13 +40,18 @@ const actions: Action[] = [
   { id: 'heart', title: 'Draw a heart', allowed: ['hand', 'cheek', 'forehead', 'shoulder', 'forearm', 'upper-back', 'waist'], describe: part => `If they want, draw a tiny heart on their ${part.label.toLowerCase()} with a fingertip.` },
 ];
 
-const pips: Record<number, number[]> = {
-  1: [5], 2: [1, 9], 3: [1, 5, 9], 4: [1, 3, 7, 9], 5: [1, 3, 5, 7, 9], 6: [1, 3, 4, 6, 7, 9],
-};
-
-function Die({ face, label, rolling }: { face: number; label: string; rolling: boolean }) {
+function Die({ face, label, rolling, revealed, vibe }: { face: number; label: 'ACTION' | 'BODY PART'; rolling: boolean; revealed: boolean; vibe: Vibe }) {
   const { tr } = useMiniI18n();
-  return <div className={`heart-die-wrap ${rolling ? 'is-rolling' : ''}`}><span className="heart-die-label">{tr(label)}</span><span className="heart-die" role="img" aria-label={`${tr(label)}: ${face}`}>{Array.from({ length: 9 }, (_, index) => <i key={index} className={pips[face].includes(index + 1) ? 'is-visible' : ''} />)}</span></div>;
+  const action = actions[face - 1];
+  const part = parts[partDeck[vibe][face - 1]];
+  const selected = label === 'ACTION' ? action : part;
+  return <div className={`heart-die-wrap ${rolling ? 'is-rolling' : ''}`} data-die-id={revealed ? selected.id : undefined}>
+    <span className="heart-die-label">{tr(label)}</span>
+    <span className="heart-die" role="img" aria-label={revealed ? `${tr(label)}: ${tr(label === 'ACTION' ? action.title : part.label)}` : tr(label)}>
+      {label === 'ACTION' ? <ActionGlyph action={rolling || revealed ? action.id : null} /> : <BodyGlyph part={rolling || revealed ? part.id : null} />}
+    </span>
+    {revealed && <strong className="heart-die-caption">{tr(label === 'ACTION' ? action.title : part.label)}</strong>}
+  </div>;
 }
 
 function BodyMap({ part }: { part: Part }) {
@@ -115,36 +122,7 @@ export function ChemistryDice({ names, vibe, onHome, onReplay }: {
 
   useEffect(() => {
     if (phase !== 'roll' || shakeState !== 'ready') return;
-    let firstPeak = 0;
-    let lastPeak = 0;
-    let peakCount = 0;
-    let gravity: [number, number, number] | null = null;
-    const onMotion = (event: DeviceMotionEvent) => {
-      const acceleration = event.acceleration;
-      let force = 0;
-      if (acceleration?.x != null && acceleration.y != null && acceleration.z != null) {
-        force = Math.hypot(acceleration.x, acceleration.y, acceleration.z);
-      } else {
-        const raw = event.accelerationIncludingGravity;
-        if (raw?.x == null || raw.y == null || raw.z == null) return;
-        const vector: [number, number, number] = [raw.x, raw.y, raw.z];
-        if (!gravity) { gravity = vector; return; }
-        gravity = gravity.map((value, index) => value * 0.85 + vector[index] * 0.15) as [number, number, number];
-        force = Math.hypot(...vector.map((value, index) => value - gravity![index]));
-      }
-      if (force < 10) return;
-      const now = Date.now();
-      if (now - lastPeak < 180) return;
-      lastPeak = now;
-      if (now - firstPeak > 1200) { firstPeak = now; peakCount = 0; }
-      peakCount += 1;
-      if (peakCount >= 2) {
-        window.removeEventListener('devicemotion', onMotion);
-        rollRef.current();
-      }
-    };
-    window.addEventListener('devicemotion', onMotion);
-    return () => window.removeEventListener('devicemotion', onMotion);
+    return listenForShake(() => rollRef.current());
   }, [phase, shakeState]);
 
   function togglePart(owner: number, id: PartId) {
@@ -184,14 +162,8 @@ export function ChemistryDice({ names, vibe, onHome, onReplay }: {
 
   async function enableShake() {
     setShakeState('checking');
-    if (!window.DeviceMotionEvent) { setShakeState('unavailable'); return; }
-    const motion = window.DeviceMotionEvent as typeof DeviceMotionEvent & { requestPermission?: () => Promise<'granted' | 'denied'> };
-    if (typeof motion.requestPermission === 'function') {
-      try {
-        if (await motion.requestPermission() !== 'granted') { setShakeState('denied'); return; }
-      } catch { setShakeState('denied'); return; }
-    }
-    setShakeState('ready');
+    const ready = await requestShakePermission();
+    setShakeState(ready ? 'ready' : window.DeviceMotionEvent ? 'denied' : 'unavailable');
   }
 
   function advance(didPlay: boolean) {
@@ -230,7 +202,7 @@ export function ChemistryDice({ names, vibe, onHome, onReplay }: {
     <h1 tabIndex={-1}>{phase === 'play' ? <>{tr("Your move,")}<br /><em>{displayName(names[round % 2])}.</em></> : <>{tr("Roll for a")}<br /><em>{tr("little spark.")}</em></>}</h1>
     <p className="lede">{phase === 'play' ? tr('One die picked the action. The other picked a spot your partner chose for themselves.') : fmt('{name} leads this round. Roll for an action and a spot {partner} chose.', { name: displayName(names[round % 2]), partner: displayName(names[recipient]) })}</p>
     <Progress current={round + 1} total={4} label="Roll" />
-    <div className="heart-dice-stage"><Die face={faces[0]} label="ACTION" rolling={phase === 'rolling'} /><Die face={faces[1]} label="BODY PART" rolling={phase === 'rolling'} /></div>
+    <div className="heart-dice-stage"><Die face={faces[0]} label="ACTION" rolling={phase === 'rolling'} revealed={phase === 'play'} vibe={vibe} /><Die face={faces[1]} label="BODY PART" rolling={phase === 'rolling'} revealed={phase === 'play'} vibe={vibe} /></div>
     {phase === 'play' && pair ? <div aria-live="polite">
       <div className="paper-card mini-paper chemistry-result"><span className="card-label">{tr("YOUR TWO DICE")}</span><div className="chemistry-pair"><div><small>{tr("ACTION")}</small><strong>{tr(pair.action.title)}</strong></div><BodyMap part={pair.part} /></div><p>{describeMove(locale, pair.action, pair.part)}</p></div>
       <div className="mini-actions"><Button variant="secondary" disabled={rerolled} onClick={() => roll(true)}><RefreshCw size={16} /> {tr("Reroll both")}</Button><Button variant="quiet" onClick={() => advance(false)}> {tr("Pass this move")}</Button></div>

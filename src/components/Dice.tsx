@@ -31,7 +31,7 @@ export function Dice({ isRolling, result, onRollComplete }: DiceProps) {
 
       const timer = setTimeout(() => {
         onRollCompleteRef.current?.();
-      }, 600);
+      }, 950);
 
       return () => clearTimeout(timer);
     }

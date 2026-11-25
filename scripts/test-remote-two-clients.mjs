@@ -98,6 +98,32 @@ try {
   assert.equal(await host.locator('.dice-action').isEnabled(), !firstTurnIsMale, 'The host chose player 1');
   assert.equal(await guest.locator('.dice-action').isEnabled(), firstTurnIsMale, 'The guest chose player 0');
 
+  const roller = firstTurnIsMale ? guest : host;
+  const partner = firstTurnIsMale ? host : guest;
+  const shake = () => roller.evaluate(() => {
+    const event = new Event('devicemotion');
+    Object.defineProperty(event, 'acceleration', { value: { x: 15, y: 0, z: 0 } });
+    window.dispatchEvent(event);
+  });
+  await roller.waitForTimeout(100);
+  await shake();
+  await roller.waitForTimeout(220);
+  await shake();
+  await roller.locator('.board-dice-layer.is-airborne').waitFor();
+  await partner.locator('.board-dice-layer.is-airborne').waitFor({ timeout: 20000 });
+  await Promise.all([
+    partner.locator('.board-dice-layer').waitFor({ timeout: 20000 }),
+    roller.locator('.board-dice-layer.has-landed').waitFor()
+  ]);
+  if (process.env.DICE_SCREENSHOT_PATH) await roller.screenshot({ path: process.env.DICE_SCREENSHOT_PATH });
+  await roller.getByRole('status').filter({ hasText: /骰子落在 [1-6] 点/ }).waitFor();
+  const rollId = await roller.evaluate(() => JSON.parse(localStorage.getItem('couple-flying-chess-v3') || '{}').lastDiceRoll?.id);
+  assert.ok(rollId, 'Shaking records one roll');
+  await shake();
+  await roller.waitForTimeout(220);
+  await shake();
+  assert.equal(await roller.evaluate(() => JSON.parse(localStorage.getItem('couple-flying-chess-v3') || '{}').lastDiceRoll?.id), rollId, 'Extra shaking cannot roll again before the turn resolves');
+
   if (!loopback) {
     const nativeHost = await browser.newPage({ viewport: { width: 390, height: 844 } });
     nativeHost.setDefaultTimeout(60000);
@@ -116,7 +142,7 @@ try {
 
   console.log(JSON.stringify({
     result: 'passed',
-    checks: ['six-character invite', loopback ? 'loopback link protection' : 'link QR joins and native code QR decodes', 'two independent clients online', 'host setup opens after partner joins', 'opposite character selection', 'both decks synced', 'host start opens guest board', 'chosen character controls the correct turn']
+    checks: ['six-character invite', loopback ? 'loopback link protection' : 'link QR joins and native code QR decodes', 'two independent clients online', 'host setup opens after partner joins', 'opposite character selection', 'both decks synced', 'host start opens guest board', 'chosen character controls the correct turn', 'shake rolls once on active client', 'board dice flies and lands for both players']
   }));
 } finally {
   await browser.close();
