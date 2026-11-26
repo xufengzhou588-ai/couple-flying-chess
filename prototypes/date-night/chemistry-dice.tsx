@@ -7,23 +7,23 @@ import { useMiniI18n, type MiniLocale } from './mini-i18n';
 import { playDiceSequence } from '../../src/utils/diceSound';
 import { listenForShake, requestShakePermission } from '../../src/utils/shake';
 import { playMiniVoice } from './mini-audio';
-import { ActionGlyph, BodyGlyph, type DicePart } from './dice-art';
+import { ActionGlyph, BodyGlyph, type DicePart, type PortraitRole } from './dice-art';
 
 type PartId = DicePart;
-type Part = { id: PartId; label: string; x: number; y: number };
+type Part = { id: PartId; label: string };
 type Action = { id: string; title: string; allowed: PartId[]; describe: (part: Part) => string };
 type Pair = { action: Action; part: Part };
 
 const parts: Record<PartId, Part> = {
-  hand: { id: 'hand', label: 'Hand', x: 25, y: 119 },
-  cheek: { id: 'cheek', label: 'Cheek', x: 94, y: 42 },
-  forehead: { id: 'forehead', label: 'Forehead', x: 80, y: 26 },
-  shoulder: { id: 'shoulder', label: 'Shoulder', x: 54, y: 78 },
-  forearm: { id: 'forearm', label: 'Forearm', x: 35, y: 101 },
-  'upper-back': { id: 'upper-back', label: 'Upper back', x: 80, y: 101 },
-  neck: { id: 'neck', label: 'Neck', x: 80, y: 65 },
-  waist: { id: 'waist', label: 'Waist', x: 80, y: 146 },
-  lips: { id: 'lips', label: 'Lips', x: 80, y: 50 },
+  hand: { id: 'hand', label: 'Hand' },
+  cheek: { id: 'cheek', label: 'Cheek' },
+  forehead: { id: 'forehead', label: 'Forehead' },
+  shoulder: { id: 'shoulder', label: 'Shoulder' },
+  forearm: { id: 'forearm', label: 'Forearm' },
+  'upper-back': { id: 'upper-back', label: 'Upper back' },
+  neck: { id: 'neck', label: 'Neck' },
+  waist: { id: 'waist', label: 'Waist' },
+  lips: { id: 'lips', label: 'Lips' },
 };
 
 const partDeck: Record<Vibe, PartId[]> = {
@@ -32,7 +32,7 @@ const partDeck: Record<Vibe, PartId[]> = {
 };
 
 const actions: Action[] = [
-  { id: 'kiss', title: 'A soft kiss', allowed: ['hand', 'cheek', 'forehead', 'shoulder', 'neck', 'lips'], describe: part => `Ask first, then give them a soft kiss on the ${part.label.toLowerCase()}.` },
+  { id: 'kiss', title: 'A soft kiss', allowed: ['cheek'], describe: part => `Ask first, then give them a soft kiss on the ${part.label.toLowerCase()}.` },
   { id: 'trace', title: 'Trace a line', allowed: ['hand', 'cheek', 'forehead', 'shoulder', 'forearm', 'upper-back', 'neck', 'waist', 'lips'], describe: part => part.id === 'lips' ? 'If they want, trace the edge of their lips with one fingertip.' : `If they want, trace a slow line along their ${part.label.toLowerCase()}.` },
   { id: 'brush', title: 'A light brush', allowed: ['hand', 'cheek', 'forehead', 'shoulder', 'forearm', 'upper-back', 'neck', 'waist', 'lips'], describe: part => `If they want, lightly brush your fingertips across their ${part.label.toLowerCase()}.` },
   { id: 'hold', title: 'Stay for a beat', allowed: ['hand', 'cheek', 'shoulder', 'forearm', 'upper-back', 'waist'], describe: part => `If they want, rest your hand on their ${part.label.toLowerCase()} for five seconds.` },
@@ -40,7 +40,7 @@ const actions: Action[] = [
   { id: 'heart', title: 'Draw a heart', allowed: ['hand', 'cheek', 'forehead', 'shoulder', 'forearm', 'upper-back', 'waist'], describe: part => `If they want, draw a tiny heart on their ${part.label.toLowerCase()} with a fingertip.` },
 ];
 
-function Die({ face, label, rolling, revealed, vibe }: { face: number; label: 'ACTION' | 'BODY PART'; rolling: boolean; revealed: boolean; vibe: Vibe }) {
+function Die({ face, label, rolling, revealed, vibe, actorRole, recipientRole }: { face: number; label: 'ACTION' | 'BODY PART'; rolling: boolean; revealed: boolean; vibe: Vibe; actorRole: PortraitRole; recipientRole: PortraitRole }) {
   const { tr } = useMiniI18n();
   const action = actions[face - 1];
   const part = parts[partDeck[vibe][face - 1]];
@@ -48,19 +48,15 @@ function Die({ face, label, rolling, revealed, vibe }: { face: number; label: 'A
   return <div className={`heart-die-wrap ${rolling ? 'is-rolling' : ''}`} data-die-id={revealed ? selected.id : undefined}>
     <span className="heart-die-label">{tr(label)}</span>
     <span className="heart-die" role="img" aria-label={revealed ? `${tr(label)}: ${tr(label === 'ACTION' ? action.title : part.label)}` : tr(label)}>
-      {label === 'ACTION' ? <ActionGlyph action={rolling || revealed ? action.id : null} /> : <BodyGlyph part={rolling || revealed ? part.id : null} />}
+      {label === 'ACTION' ? <ActionGlyph action={rolling || revealed ? action.id : null} actorRole={actorRole} /> : <BodyGlyph part={rolling || revealed ? part.id : null} recipientRole={recipientRole} />}
     </span>
     {revealed && <strong className="heart-die-caption">{tr(label === 'ACTION' ? action.title : part.label)}</strong>}
   </div>;
 }
 
-function BodyMap({ part }: { part: Part }) {
+function BodyMap({ part, recipientRole }: { part: Part; recipientRole: PortraitRole }) {
   const { tr, fmt } = useMiniI18n();
-  return <div className="body-map"><svg viewBox="0 0 160 190" role="img" aria-label={fmt('Selected body part: {part}', { part: tr(part.label) })}>
-    <circle cx="80" cy="38" r="22" />
-    <path d="M62 62 Q43 65 40 83 L24 125 M98 62 Q117 65 120 83 L136 125 M54 77 Q61 112 57 151 L103 151 Q99 112 106 77 M57 151 L49 184 M103 151 L111 184" />
-    <circle className="body-map-marker" cx={part.x} cy={part.y} r="13" />
-  </svg><strong>{tr(part.label)}</strong></div>;
+  return <div className="body-map" role="img" aria-label={fmt('Selected body part: {part}', { part: tr(part.label) })}><BodyGlyph part={part.id} recipientRole={recipientRole} /><strong>{tr(part.label)}</strong></div>;
 }
 
 function describeMove(locale: MiniLocale, action: Action, part: Part) {
@@ -87,8 +83,8 @@ function describeMove(locale: MiniLocale, action: Action, part: Part) {
 type Phase = 'pick-a' | 'pick-b' | 'roll' | 'rolling' | 'play' | 'choose' | 'end';
 type ShakeState = 'off' | 'checking' | 'ready' | 'denied' | 'unavailable';
 
-export function ChemistryDice({ names, vibe, onHome, onReplay }: {
-  names: Names; vibe: Vibe; onHome: () => void; onReplay: () => void;
+export function ChemistryDice({ names, vibe, firstPortraitRole, onHome, onReplay }: {
+  names: Names; vibe: Vibe; firstPortraitRole: PortraitRole; onHome: () => void; onReplay: () => void;
 }) {
   const { locale, tr, fmt, displayName } = useMiniI18n();
   const [phase, setPhase] = useState<Phase>('pick-a');
@@ -107,6 +103,8 @@ export function ChemistryDice({ names, vibe, onHome, onReplay }: {
   const timeoutRef = useRef<number | null>(null);
   const rollRef = useRef<() => void>(() => undefined);
   const recipient = (round + 1) % 2;
+  const actorRole: PortraitRole = round % 2 === 0 ? firstPortraitRole : firstPortraitRole === 'man' ? 'woman' : 'man';
+  const recipientRole: PortraitRole = actorRole === 'man' ? 'woman' : 'man';
   useScreenFocus(`chemistry-${phase}-${round}`);
 
   useEffect(() => () => {
@@ -141,7 +139,7 @@ export function ChemistryDice({ names, vibe, onHome, onReplay }: {
 
   function roll(isReroll = false) {
     void playDiceSequence();
-    playMiniVoice(locale, round % 2, 'mini-roll');
+    playMiniVoice(locale, actorRole === 'man' ? 0 : 1, 'mini-roll');
     setPhase('rolling');
     intervalRef.current = window.setInterval(() => setFaces([1 + Math.floor(Math.random() * 6), 1 + Math.floor(Math.random() * 6)]), 70);
     timeoutRef.current = window.setTimeout(() => {
@@ -175,7 +173,8 @@ export function ChemistryDice({ names, vibe, onHome, onReplay }: {
 
   if (phase === 'pick-a' || phase === 'pick-b') {
     const owner = phase === 'pick-a' ? 0 : 1;
-    return <Handoff key={phase} name={names[owner]} voicePlayer={owner} title="Choose your yeses." label="Only you see your comfort choices">
+    const ownerRole = owner === 0 ? firstPortraitRole : firstPortraitRole === 'man' ? 'woman' : 'man';
+    return <Handoff key={phase} name={names[owner]} voicePlayer={ownerRole === 'man' ? 0 : 1} title="Choose your yeses." label="Only you see your comfort choices">
       <p className="lede">{tr("Choose spots on your own body you would be comfortable letting your partner touch tonight.")}</p>
       <div className="body-picks">{partDeck[vibe].map(id => <button key={id} className={picks[owner].includes(id) ? 'selected' : ''} aria-pressed={picks[owner].includes(id)} onClick={() => togglePart(owner, id)}>{tr(parts[id].label)}<Heart size={15} /></button>)}</div>
       <p className="form-footnote">{tr("On their turn, your partner rolls only from your choices. You can still change your mind or pass on any move.")}</p>
@@ -202,9 +201,9 @@ export function ChemistryDice({ names, vibe, onHome, onReplay }: {
     <h1 tabIndex={-1}>{phase === 'play' ? <>{tr("Your move,")}<br /><em>{displayName(names[round % 2])}.</em></> : <>{tr("Roll for a")}<br /><em>{tr("little spark.")}</em></>}</h1>
     <p className="lede">{phase === 'play' ? tr('One die picked the action. The other picked a spot your partner chose for themselves.') : fmt('{name} leads this round. Roll for an action and a spot {partner} chose.', { name: displayName(names[round % 2]), partner: displayName(names[recipient]) })}</p>
     <Progress current={round + 1} total={4} label="Roll" />
-    <div className="heart-dice-stage"><Die face={faces[0]} label="ACTION" rolling={phase === 'rolling'} revealed={phase === 'play'} vibe={vibe} /><Die face={faces[1]} label="BODY PART" rolling={phase === 'rolling'} revealed={phase === 'play'} vibe={vibe} /></div>
+    <div className="heart-dice-stage"><Die face={faces[0]} label="ACTION" rolling={phase === 'rolling'} revealed={phase === 'play'} vibe={vibe} actorRole={actorRole} recipientRole={recipientRole} /><Die face={faces[1]} label="BODY PART" rolling={phase === 'rolling'} revealed={phase === 'play'} vibe={vibe} actorRole={actorRole} recipientRole={recipientRole} /></div>
     {phase === 'play' && pair ? <div aria-live="polite">
-      <div className="paper-card mini-paper chemistry-result"><span className="card-label">{tr("YOUR TWO DICE")}</span><div className="chemistry-pair"><div><small>{tr("ACTION")}</small><strong>{tr(pair.action.title)}</strong></div><BodyMap part={pair.part} /></div><p>{describeMove(locale, pair.action, pair.part)}</p></div>
+      <div className="paper-card mini-paper chemistry-result"><span className="card-label">{tr("YOUR TWO DICE")}</span><div className="chemistry-pair"><div><small>{tr("ACTION")}</small><strong>{tr(pair.action.title)}</strong></div><BodyMap part={pair.part} recipientRole={recipientRole} /></div><p>{describeMove(locale, pair.action, pair.part)}</p></div>
       <div className="mini-actions"><Button variant="secondary" disabled={rerolled} onClick={() => roll(true)}><RefreshCw size={16} /> {tr("Reroll both")}</Button><Button variant="quiet" onClick={() => advance(false)}> {tr("Pass this move")}</Button></div>
       <button className="heart-timer" onClick={() => setTimerRunning(previous => !previous)} disabled={seconds === 0} aria-label={tr(timerRunning ? 'Pause twenty-second timer' : 'Start twenty-second timer')}><Timer size={19} /><span>{seconds}s</span><small>{tr(seconds === 0 ? 'Time is up' : timerRunning ? 'Pause timer' : 'Optional timer')}</small></button>
       <Button className="full-width" onClick={() => advance(true)}>{tr(round === 3 ? 'Finish our round' : 'Next roll')} <ArrowRight size={18} /></Button>

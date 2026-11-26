@@ -61,7 +61,8 @@ try {
       assert.ok((await page.locator('.chemistry-result > p').innerText()).length > 20);
       assert.equal(await page.locator('.heart-die-wrap').first().locator('.heart-die-caption').innerText(), await page.locator('.chemistry-pair strong').first().innerText());
       assert.equal(await page.locator('.heart-die-wrap').last().locator('.heart-die-caption').innerText(), await page.locator('.body-map strong').innerText());
-      assert.equal(await page.locator('.heart-die svg').count(), 2);
+      assert.equal(await page.locator('.heart-die .dice-art-sprite').count(), 2);
+      assert.equal(await page.locator('.body-map .dice-art-sprite').count(), 1);
       const recipientChoices = stage === 'new' ? [round % 2 === 0 ? 'Cheek' : 'Hand'] : stage === 'married' ? ['Neck', 'Lips'] : ['Hand', 'Shoulder'];
       assert.ok(recipientChoices.includes(await page.locator('.body-map strong').innerText()));
       if (round === 0) {
@@ -121,6 +122,32 @@ try {
     await page.locator('.sketch-gallery button').first().click();
     await page.getByText('Sketches stay on this device and disappear when you leave or reload.').waitFor();
     console.log(`Sketch Our Date ${stage}: three drawings, private handoff, guessing, favorite`);
+  }
+
+  for (const [firstRole, expectedCell, expectedRecipientSheet] of [
+    ['Man', '0', 'chemistry-parts-female-velvet'],
+    ['Woman', '1', 'chemistry-parts-male-velvet'],
+  ]) {
+    await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+    await click('Play Chemistry Dice');
+    await page.getByLabel('Player 1', { exact: true }).fill('Alex');
+    await page.getByLabel('Player 2', { exact: true }).fill('Sam');
+    await page.getByRole('radio', { name: firstRole, exact: true }).check();
+    await click('Choose our comfort');
+    await click('I’m Alex');
+    await page.getByRole('button', { name: 'Cheek', exact: true }).click();
+    await click('Hide & pass to Sam');
+    await click('I’m Sam');
+    await page.getByRole('button', { name: 'Cheek', exact: true }).click();
+    await click('Hide & roll together');
+    await page.evaluate(() => { Math.random = () => 0.999999; });
+    await page.getByRole('button', { name: /^(Tap instead|Roll both dice)$/ }).dispatchEvent('click');
+    await page.locator('.chemistry-result').waitFor();
+    assert.equal(await page.locator('.heart-die-wrap').first().getAttribute('data-die-id'), 'kiss');
+    assert.equal(await page.locator('.heart-die-wrap').first().locator('.dice-art-sprite').getAttribute('data-art-cell'), expectedCell);
+    assert.ok((await page.locator('.heart-die-wrap').last().locator('.dice-art-sprite').getAttribute('style')).includes(expectedRecipientSheet));
+    assert.ok((await page.locator('.body-map .dice-art-sprite').getAttribute('style')).includes(expectedRecipientSheet));
+    console.log(`Chemistry Dice ${firstRole} kiss artwork and recipient part matched`);
   }
 
   await page.setViewportSize({ width: 320, height: 640 });

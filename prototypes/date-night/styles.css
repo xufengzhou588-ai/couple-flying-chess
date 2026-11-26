@@ -460,17 +460,11 @@ dialog::backdrop { background: #09070cd9; }
 .shake-prompt span { color: var(--cfc-text-muted); font-size: 12px; }
 .heart-die-wrap { display: grid; justify-items: center; align-content: start; gap: 9px; width: 120px; }
 .heart-die-label { color: var(--cfc-rose-soft); font-size: 10px; letter-spacing: 1.6px; }
-.heart-die { display: grid; place-items: center; width: 108px; height: 108px; padding: 10px; border: 2px solid #d99a9e; border-radius: 21px; background: linear-gradient(145deg, #fff5e9, #e7c9bb); box-shadow: 0 12px 0 #6d374d, 0 18px 30px #0008; transform: rotate(-5deg); }
+.heart-die { display: grid; place-items: center; width: 108px; height: 108px; border: 0; border-radius: 11px; background: #280b23; box-shadow: 0 12px 0 #6d374d, 0 18px 30px #0008; transform: rotate(-5deg); overflow: hidden; }
 .heart-die-wrap:nth-child(2) .heart-die { transform: rotate(6deg); }
-.heart-die svg { display: block; width: 100%; height: 100%; }
+.dice-art-sprite { display: block; width: 100%; height: 100%; border-radius: inherit; background-repeat: no-repeat; background-color: #280b23; }
+.dice-art-sealed { color: #f4bcd4; font: italic 56px/1 Georgia, serif; }
 .heart-die-caption { min-height: 2.5em; max-width: 120px; color: var(--cfc-text); font-size: 11px; line-height: 1.25; text-align: center; overflow-wrap: anywhere; }
-.dice-art-ground { fill: none; stroke: #f6bce0; stroke-width: 2; stroke-linecap: round; }
-.dice-art-person { fill: #27102d; }
-.dice-art-arm { fill: none; stroke: #27102d; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
-.dice-art-gesture { fill: none; stroke: #ffe2ab; stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
-.dice-art-heart, .dice-art-spark { fill: #ffe2ab; }
-.dice-art-figure { fill: none; stroke: #27102d; stroke-width: 3.6; stroke-linecap: round; stroke-linejoin: round; }
-.dice-art-glow { fill: #ffe2ab55; stroke: #ffe2ab; stroke-width: 1.5; }
 .heart-die-wrap.is-rolling .heart-die { animation: tumble .22s linear infinite alternate; }
 @keyframes tumble { to { transform: translateY(-9px) rotate(13deg) scale(1.06); } }
 .heart-move-card { min-height: 160px; }
@@ -482,13 +476,16 @@ dialog::backdrop { background: #09070cd9; }
 .body-picks button.selected { border-color: rgba(248, 211, 138, .5); background: var(--cfc-select-active); }
 .body-picks button.selected svg { color: var(--cfc-amber); opacity: 1; fill: currentColor; }
 .body-picks button:active { transform: scale(.975); }
+.portrait-role-options { display: flex; gap: 10px; margin-top: 10px; }
+.portrait-role-options label { display: flex; align-items: center; gap: 9px; min-height: 42px; padding: 8px 15px; border: 1px solid var(--cfc-border); border-radius: 8px; background: var(--cfc-bg-elevated); color: var(--cfc-text); }
+.portrait-role-options label:has(input:checked) { border-color: var(--cfc-rose); box-shadow: inset 3px 0 var(--cfc-rose); }
+.portrait-role-options input { accent-color: var(--cfc-rose); }
 .chemistry-pair { display: grid; grid-template-columns: minmax(0, 1fr) 135px; align-items: center; gap: 14px; }
 .chemistry-pair > div:first-child small { display: block; color: #9c6175; font-size: 10px; letter-spacing: 1.3px; margin-bottom: 9px; }
 .chemistry-pair > div:first-child strong { display: block; font: 27px/1.2 Georgia, serif; }
 .chemistry-result > p { clear: both; border-top: 1px solid #d5b9ae; padding-top: 16px; font: 17px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
 .body-map { display: grid; justify-items: center; gap: 3px; border: 1px solid #d5b9ae; border-radius: 12px; background: #fff5ea; padding: 5px 8px 7px; }
-.body-map svg { display: block; width: 88px; height: 105px; fill: none; stroke: #6c4856; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
-.body-map .body-map-marker { fill: #ec82a0; stroke: #9a4b67; stroke-width: 3; }
+.body-map .dice-art-sprite { width: 88px; height: 88px; border-radius: 8px; }
 .body-map strong { font: 13px/1.25 Georgia, serif; text-align: center; }
 .heart-timer { display: flex; align-items: center; gap: 10px; width: 100%; margin: 4px 0 17px; padding: 11px 16px; border: 1px solid var(--cfc-border); border-radius: var(--cfc-radius-sm); background: var(--cfc-bg-elevated); color: var(--cfc-text); text-align: left; }
 .heart-timer > svg { color: var(--cfc-rose); }
@@ -571,13 +568,13 @@ dialog::backdrop { background: #09070cd9; }
   .answer-reveal strong { font-size: 17px; }
   .heart-dice-stage { gap: 14px; }
   .heart-die-wrap { width: 100px; }
-  .heart-die { width: 88px; height: 88px; padding: 7px; }
+  .heart-die { width: 88px; height: 88px; }
   .sketch-gallery button { grid-template-columns: 96px minmax(0, 1fr); }
   .sketch-gallery img { width: 96px; }
   .sketch-gallery span { font-size: 15px; }
   .chemistry-pair { grid-template-columns: minmax(0, 1fr) 105px; gap: 8px; }
   .chemistry-pair > div:first-child strong { font-size: 22px; }
-  .body-map svg { width: 75px; height: 91px; }
+  .body-map .dice-art-sprite { width: 75px; height: 75px; }
 }
 
 /* Small matchbook vignettes make each prompt's setting legible at a glance. */
@@ -767,10 +764,8 @@ body { background: radial-gradient(circle at 76% 0%, #4d0f43 0, transparent 34%)
 .card-label, .idea-number, .mission-nudge { color: #d3a8c8; }
 .card-label svg, .paper-link, .secret-goal svg { color: #ff53a5; }
 .secret-goal, .paper-rule, .after-hours-callback, .chemistry-result > p { border-color: #75305e; }
-.heart-die { border-color: #ff53a5; border-radius: 10px; background: linear-gradient(145deg, #c84d9a, #5f1d65); box-shadow: 0 9px 0 #300b2b, 0 10px 26px #ff3b9440; }
+.heart-die { box-shadow: 0 9px 0 #300b2b, 0 10px 26px #ff3b9440; }
 .body-map { border-color: #91356f; border-radius: 7px; background: #2b122e; }
-.body-map svg { stroke: #ffb5dc; }
-.body-map .body-map-marker { fill: #ff3b94; stroke: #63204f; }
 .body-map strong { color: #fff0f7; }
 .mystery-hint { background: #3b1b48; color: #e5cbff; }
 .prompt-art { --art-paper: #2a102d; --art-ink: #ffb5dc; --art-rose: #ff53a5; --art-blush: #813968; --art-sage: #b88aff; --art-gold: #d8b5ff; --art-border: #91356f; filter: drop-shadow(0 0 7px #ff3b9433); }
