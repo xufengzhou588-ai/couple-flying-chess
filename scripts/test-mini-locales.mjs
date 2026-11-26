@@ -11,16 +11,20 @@ async function handoff(page) {
 async function noOverflow(page, label) {
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `${label} overflows`);
 }
-async function start(page, locale, mode) {
+async function start(page, locale, mode, stage = 'new') {
   await page.goto(`${base}?lang=${locale}`, { waitUntil: 'domcontentloaded' });
   await page.locator(`.catalog-card-${mode}`).click();
+  if (mode === 'after-hours' && stage === 'married') {
+    await page.locator('input[name="stage"][value="married"]').evaluate(element => element.click());
+    assert.equal(await page.locator('input[name="stage"][value="married"]').isChecked(), true);
+  }
   await page.locator('.setup-form button[type="submit"]').click();
   await handoff(page);
   await noOverflow(page, `${locale} ${mode} first card`);
 }
-async function playSlowBurn(page) {
+async function playSlowBurn(page, moveCount = 3) {
   for (const owner of [0, 1]) {
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < moveCount; i++) {
       await page.locator('.after-hours-votes .button-primary').click();
     }
     await handoff(page);
@@ -95,6 +99,19 @@ try {
       console.log(`${locale} ${mode}: full round passed`);
       await page.close();
     }
+    const marriedPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    marriedPage.setDefaultTimeout(20000);
+    const marriedMissing = [];
+    const marriedErrors = [];
+    marriedPage.on('console', message => { if (message.text().includes('Missing') && message.text().includes('mini-game translation')) marriedMissing.push(message.text()); });
+    marriedPage.on('pageerror', error => marriedErrors.push(error.message));
+    await start(marriedPage, locale, 'after-hours', 'married');
+    await playSlowBurn(marriedPage, 6);
+    await noOverflow(marriedPage, `${locale} married slow burn ending`);
+    assert.deepEqual(marriedMissing, [], `${locale} married slow burn has untranslated lines`);
+    assert.deepEqual(marriedErrors, [], `${locale} married slow burn has page errors`);
+    console.log(`${locale} married slow burn: full round passed`);
+    await marriedPage.close();
   }
 } finally {
   await browser.close();

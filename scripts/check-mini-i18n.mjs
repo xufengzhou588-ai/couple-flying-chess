@@ -39,7 +39,7 @@ for (const file of files) {
   visit(source);
 }
 
-for (const [file, variable] of [['after-hours.tsx', 'moves'], ['after-hours.tsx', 'settings'], ['after-hours.tsx', 'invitations'], ['sketch-date.tsx', 'sketches']]) {
+for (const [file, variable] of [['after-hours.tsx', 'newMoves'], ['after-hours.tsx', 'togetherMoves'], ['after-hours.tsx', 'marriedPlayfulMoves'], ['after-hours.tsx', 'marriedFlirtyMoves'], ['after-hours.tsx', 'settings'], ['after-hours.tsx', 'invitations'], ['sketch-date.tsx', 'sketches']]) {
   const source = ts.createSourceFile(file, readFileSync(`${root}${file}`, 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
   function visit(node) {
     if (ts.isVariableDeclaration(node) && node.name.getText(source) === variable) {

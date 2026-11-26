@@ -6,18 +6,21 @@ import { stageLabels, type Names, type Stage, type Vibe } from './content';
 import { useScreenFocus } from './useScreenFocus';
 import { useMiniI18n } from './mini-i18n';
 import { playMiniCue, playMiniVoice } from './mini-audio';
+import bedroomSheet from './assets/slow-burn-married-velvet.png';
 
 type Choice = 'yes' | 'maybe' | 'pass';
 type Move = {
-  id: 'words' | 'gaze' | 'closer';
+  id: string;
   title: string;
   pitch: string;
   art?: ArtKind;
+  bedroomCell?: number;
   action: string;
+  invitation?: string;
   comeback: string;
 };
 
-const moves: Move[] = [
+const newMoves: Move[] = [
   {
     id: 'words', title: 'Make me blush', pitch: 'Trade one specific compliment, close enough to hear it clearly.',
     art: 'chat',
@@ -37,10 +40,38 @@ const moves: Move[] = [
   },
 ];
 
+const togetherMoves: Move[] = [
+  { id: 'welcome', title: 'The welcome-home kiss', pitch: 'Greet them as if you have been waiting all week.', art: 'home', action: 'Ask for a kiss and let them choose how long it lasts.', invitation: '“Can I have the kind of hello we used to save for dates?”', comeback: '“Only if you promise not to rush away.”' },
+  { id: 'memory', title: 'Remember that night', pitch: 'Bring back one detail from a date you still think about.', art: 'ticket', action: 'Each name one detail. Then choose one to recreate soon.', invitation: '“Remember that night? I still think about one part of it.”', comeback: '“Tell me yours. I have one too.”' },
+  { id: 'close', title: 'Choose the next move', pitch: 'Offer a kiss, a slow dance, or a private plan for later.', art: 'dance', action: 'Let your partner pick one, suggest another, or pass.', invitation: '“I have three ideas for us. Which one sounds like tonight?”', comeback: '“Tell me the options. I might add a fourth.”' },
+];
+
+const marriedPlayfulMoves: Move[] = [
+  { id: 'pillow-look', title: 'Pillow talk, no phones', pitch: 'Lie face to face and tell each other one thing you still find irresistible.', bedroomCell: 1, action: 'Take turns with one honest line. A smile is allowed to interrupt.', invitation: '“Phone down. Tell me one thing you still like about us.”', comeback: '“I have more than one. You go first.”' },
+  { id: 'bedside-kiss', title: 'One more goodnight kiss', pitch: 'Meet at the edge of the bed for a kiss that lasts longer than usual.', bedroomCell: 0, action: 'Ask for one kiss. Let your partner decide if it gets an encore.', invitation: '“Can we give tonight a better ending?”', comeback: '“That depends. How good is your first kiss?”' },
+  { id: 'switch-lead', title: 'Your turn, then mine', pitch: 'Each choose one small bedroom move the other can say yes to or change.', bedroomCell: 5, action: 'Offer one move each. Keep the version you both like.', invitation: '“You pick our first move. I get the next one.”', comeback: '“Deal. No peeking at my choice.”' },
+];
+
+const marriedFlirtyMoves: Move[] = [
+  { id: 'slow-kiss', title: 'A kiss worth staying for', pitch: 'Sit together at the edge of the bed and let the first kiss take its time.', bedroomCell: 0, action: 'Take turns choosing when to lean in. Pause and ask before another kiss.', invitation: '“I want to kiss you like we have nowhere else to be. Can I?”', comeback: '“Come closer. Slow is exactly what I want.”' },
+  { id: 'face-to-face', title: 'Face to face', pitch: 'Turn toward each other on the pillows; choose a look, a kiss, or both.', bedroomCell: 1, action: 'Stay face to face for three breaths. Let either person choose the next move.', invitation: '“Stay here with me. What should I do first?”', comeback: '“Start with that look. Then ask me again.”' },
+  { id: 'whisper-wish', title: 'Whisper a wish', pitch: 'Tell your spouse one thing you would love tonight, softly and without guessing.', bedroomCell: 2, action: 'Each whisper one wish. The other can say yes, suggest a change, or pass.', invitation: '“I have one wish for tonight. Want to hear it?”', comeback: '“Tell me. I’ll tell you what I want too.”' },
+  { id: 'shoulder-heart', title: 'Leave a little clue', pitch: 'Trace a tiny heart over a clothed shoulder and ask where the next kiss should land.', bedroomCell: 3, action: 'Ask before touching. Let their answer choose the next move.', invitation: '“I’m leaving you a clue. Where would you like the next kiss?”', comeback: '“I like that clue. Try here.”' },
+  { id: 'side-by-side', title: 'Side by side', pitch: 'Lie together under the covers and let one person choose what comes next.', bedroomCell: 4, action: 'Hold hands for three breaths; ask if they want a kiss, a whisper, or more time.', invitation: '“Come lie next to me. We can take our time.”', comeback: '“Yes. Stay close and ask me what I’m thinking.”' },
+  { id: 'take-the-lead', title: 'Your turn to lead', pitch: 'Take turns choosing one bedtime move: a kiss, a close embrace, or a whispered request.', bedroomCell: 5, action: 'One person offers a move; the other accepts, changes it, or passes. Then swap.', invitation: '“Your move. Surprise me with something I’d actually like.”', comeback: '“Only if I get the next turn.”' },
+];
+
+function MoveIllustration({ move }: { move: Move }) {
+  if (move.bedroomCell === undefined) return <PromptIllustration kind={move.art} />;
+  const column = move.bedroomCell % 3;
+  const row = Math.floor(move.bedroomCell / 3);
+  return <span className="prompt-art bedroom-art" data-art-kind={`bedroom-${move.bedroomCell}`} aria-hidden="true" style={{ backgroundImage: `url(${bedroomSheet})`, backgroundSize: '300% 200%', backgroundPosition: `${column * 50}% ${row * 100}%` }} />;
+}
+
 const settings: Record<Stage, string> = {
   new: 'The date is ending. Neither of you is in a hurry to say goodbye.',
   together: 'You made it home. The ordinary evening still has room for one more moment.',
-  married: 'The day is finally quiet. You get to choose how tonight begins again.',
+  married: 'The bedroom door is closed. You get to choose how tonight begins together.',
 };
 
 const invitations: Record<Stage, Record<Move['id'], string>> = {
@@ -65,6 +96,7 @@ export function AfterHours({ names, stage, vibe, onHome, onReplay }: {
   names: Names; stage: Stage; vibe: Vibe; onHome: () => void; onReplay: () => void;
 }) {
   const { locale, tr, fmt, displayName } = useMiniI18n();
+  const deck = stage === 'married' ? vibe === 'flirty' ? marriedFlirtyMoves : marriedPlayfulMoves : stage === 'together' ? togetherMoves : newMoves;
   const [phase, setPhase] = useState<'pick' | 'detail' | 'reveal' | 'scene' | 'ending'>('pick');
   const [owner, setOwner] = useState(0);
   const [index, setIndex] = useState(0);
@@ -74,15 +106,15 @@ export function AfterHours({ names, stage, vibe, onHome, onReplay }: {
   const [beat, setBeat] = useState(0);
   const [ending, setEnding] = useState<'linger' | 'later'>('linger');
   useScreenFocus(`after-hours-${phase}-${owner}-${index}-${beat}`);
-  const matches = moves.filter(move => answers[0][move.id] !== 'pass' && answers[1][move.id] !== 'pass' && answers[0][move.id] && answers[1][move.id]);
+  const matches = deck.filter(move => answers[0][move.id] !== 'pass' && answers[1][move.id] !== 'pass' && answers[0][move.id] && answers[1][move.id]);
 
   function choose(choice: Choice) {
-    const thisPerson = { ...answers[owner], [moves[index].id]: choice };
+    const thisPerson = { ...answers[owner], [deck[index].id]: choice };
     setAnswers(previous => owner === 0
       ? [thisPerson, previous[1]]
       : [previous[0], thisPerson]);
-    if (index < moves.length - 1) setIndex(index + 1);
-    else if (moves.every(move => thisPerson[move.id] === 'pass')) {
+    if (index < deck.length - 1) setIndex(index + 1);
+    else if (deck.every(move => thisPerson[move.id] === 'pass')) {
       if (owner === 0) { setOwner(1); setIndex(0); }
       else setPhase('reveal');
     } else setPhase('detail');
@@ -98,12 +130,12 @@ export function AfterHours({ names, stage, vibe, onHome, onReplay }: {
   </Handoff>;
 
   if (phase === 'pick') {
-    const move = moves[index];
+    const move = deck[index];
     return <Handoff key={owner} name={names[owner]} voicePlayer={owner} title="What sounds good tonight?" label="Only you see these choices">
-      <Progress current={index + 1} total={moves.length} label="Spark" />
+      <Progress current={index + 1} total={deck.length} label="Spark" />
       <div className="paper-card mini-paper after-hours-choice" data-move-id={move.id}>
-        <span className="card-label">{tr("A SMALL MOVE")}</span>
-        <PromptIllustration kind={move.art} />
+        <span className="card-label">{tr(stage === 'married' ? 'A BEDROOM MOVE' : 'A SMALL MOVE')}</span>
+        <MoveIllustration move={move} />
         <p>{tr(move.title)}</p><small>{tr(move.pitch)}</small>
       </div>
       <div className="after-hours-votes">
@@ -120,8 +152,8 @@ export function AfterHours({ names, stage, vibe, onHome, onReplay }: {
     <h1 tabIndex={-1}>{matches.length ? <>{tr("You both left")}<br /><em>{tr("the door open.")}</em></> : <>{tr("Tonight can stay")}<br /><em>{tr("easy.")}</em></>}</h1>
     <p className="lede">{tr(matches.length ? 'Pick one spark to play out together. You can change your minds at any point.' : 'No shared spark this round. Keep the good company, or try another night.')}</p>
     {matches.length > 0 && <div className="after-hours-match-list">{matches.map(move =>
-      <button key={move.id} className={`after-hours-match ${move.art ? '' : 'artless'}`} data-match-move={move.id} onClick={() => { setSelected(move); setPhase('scene'); void playMiniCue('reveal'); playMiniVoice(locale, 1, 'mini-spark'); }}>
-        <PromptIllustration kind={move.art} /><span><small>{tr("YOUR SHARED SPARK")}</small><strong>{tr(move.title)}</strong><em>{tr(move.pitch)}</em></span><ArrowRight size={19} />
+      <button key={move.id} className={`after-hours-match ${move.art || move.bedroomCell !== undefined ? '' : 'artless'}`} data-match-move={move.id} onClick={() => { setSelected(move); setPhase('scene'); void playMiniCue('reveal'); playMiniVoice(locale, 1, 'mini-spark'); }}>
+        <MoveIllustration move={move} /><span><small>{tr("YOUR SHARED SPARK")}</small><strong>{tr(move.title)}</strong><em>{tr(move.pitch)}</em></span><ArrowRight size={19} />
       </button>)}</div>}
     <p className="soft-note"><Lock size={14} /> {tr("Everything else stays between each person and their choices.")}</p>
     <Button className="full-width" variant="secondary" onClick={matches.length ? onReplay : onHome}>{tr(matches.length ? 'Start a different round' : 'Choose another game')}</Button>
@@ -133,8 +165,8 @@ export function AfterHours({ names, stage, vibe, onHome, onReplay }: {
     <Progress current={beat + 1} total={3} label="Beat" />
     <div className="paper-card mini-paper after-hours-scene">
       <span className="card-label">{beat === 0 ? tr('YOUR SETTING') : beat === 1 ? fmt('{name}, YOUR INVITATION', { name: displayName(names[0]) }) : fmt('{name}, YOUR REPLY', { name: displayName(names[1]) })}</span>
-      <PromptIllustration kind={beat === 0 ? (stage === 'new' ? undefined : 'home') : selected.art} />
-      <p>{tr(beat === 0 ? settings[stage] : beat === 1 ? (vibe === 'playful' && selected.id === 'closer' ? '“Want to come a little closer, or should I try one more opening line?”' : invitations[stage][selected.id]) : selected.comeback)}</p>
+      {selected.bedroomCell !== undefined ? <MoveIllustration move={selected} /> : <PromptIllustration kind={beat === 0 ? (stage === 'new' ? undefined : 'home') : selected.art} />}
+      <p>{tr(beat === 0 ? settings[stage] : beat === 1 ? (vibe === 'playful' && selected.id === 'closer' ? '“Want to come a little closer, or should I try one more opening line?”' : selected.invitation ?? invitations[stage][selected.id]) : selected.comeback)}</p>
       <small>{tr(beat === 0 ? 'Put the phone down for a breath. Decide who will make the first move.' : beat === 1 ? selected.action : 'Use your own words. Then decide together whether to linger or leave this moment here.')}</small>
       {beat > 0 && details[beat - 1].trim() && <div className="after-hours-callback"><Sparkles size={15} /><span>{fmt("Make it personal: “{detail}”", { detail: details[beat - 1].trim() })}</span></div>}
     </div>

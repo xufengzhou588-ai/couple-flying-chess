@@ -1,6 +1,6 @@
 # App Store 1.1.1 — US English discovery update
 
-Prepared for the **free** public release using the 1.1.1 (16) TestFlight build after iPhone verification. The four Midnight Flirt mini games and Flight Chess must be present in the build selected for App Review. The mini games use one phone; only Flight Chess has an optional room-code mode for two devices. Do not add mainland China to storefront availability.
+Prepared for the **free** public release using the 1.1.1 (17) TestFlight build after iPhone verification. The four Midnight Flirt mini games and Flight Chess must be present in the build selected for App Review. The mini games use one phone; only Flight Chess has an optional room-code mode for two devices. Do not add mainland China to storefront availability.
 
 ## Copy for App Store Connect
 
@@ -62,7 +62,7 @@ Date night now has four more ways to play: The Slow Burn, Chemistry Dice, Sketch
 
 All files are PNG, 1290 × 2796 px, without alpha. Apple lists this resolution as an accepted iPhone with Dynamic Island (large display) size. The first two show the current unified web UI used by the iOS build; the third shows the current Flight Chess board UI.
 
-1. [`01-four-couple-games-6.9.png`](../app-store-screenshots/1.1.1-us-discovery/01-four-couple-games-6.9.png) — four mini games and the Flight Chess entry.
+1. [`01-four-couple-games-6.9.png`](../app-store-screenshots/1.1.1-us-discovery/01-four-couple-games-6.9.png) — four mini games in a two-column mobile catalog and the Flight Chess entry.
 2. [`02-chemistry-dice-6.9.png`](../app-store-screenshots/1.1.1-us-discovery/02-chemistry-dice-6.9.png) — one actual dice result, with action, body part, and pass/reroll controls.
 3. [`03-flight-chess-board-6.9.png`](../app-store-screenshots/1.1.1-us-discovery/03-flight-chess-board-6.9.png) — Flight Chess board and turn controls.
 
@@ -70,8 +70,8 @@ Upload these to the **US English** localization in this order. Keep existing sup
 
 ## Release gate and evidence
 
-- The local iOS project is set to marketing version 1.1.1, build 16. Chemistry Dice now uses the selected Midnight Flirt illustrations: a soft cheek kiss mark when the man kisses the woman, a lip print when the woman kisses the man, and a matching close-up of the receiving partner's selected body part. The setup lets the couple choose whether Player 1 is the man or woman in the illustrations. Build 15 added an always reachable mobile back button and iPhone safe-area spacing.
-- Before submission, compare the screenshots with the final TestFlight build on an iPhone and confirm the four-game catalog, one dice result, different body part choices, direct shake control in both dice games, Flight Chess landing animation and sound, language switch, and room-code flow. Confirm the chosen Chemistry Dice art matches its result text before submitting for App Review.
+- The local iOS project is set to marketing version 1.1.1, build 17. The mini-game catalog now shows all four entries on small iPhones and scrolls inside the WKWebView. The Slow Burn has separate new, together, and married decks; married/flirty has six illustrated bedroom moves with private mutual choice. Build 16 added the selected Midnight Flirt Chemistry Dice illustrations. Build 15 added an always reachable mobile back button and iPhone safe-area spacing.
+- Before submission, compare the screenshots with the final TestFlight build on an iPhone and confirm the four-game catalog is fully visible and scrollable on a small screen, the married/flirty Slow Burn deck and bedroom illustrations, one dice result, different body part choices, direct shake control in both dice games, Flight Chess landing animation and sound, language switch, and room-code flow. Confirm the chosen Chemistry Dice art matches its result text before submitting for App Review.
 - On 2026-11-20, App Store Connect API access recovered after the account holder submitted the tax form. The 1.1.1 draft now has the US English metadata and three complete screenshots; its availability remains USA only.
 
 Apple references: [product-page fields](https://developer.apple.com/help/app-store-connect/reference/app-information/platform-version-information/), [screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/), [agreements status](https://developer.apple.com/help/app-store-connect/manage-agreements/view-agreements-status/).
