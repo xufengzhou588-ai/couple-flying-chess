@@ -2,14 +2,14 @@ import { ChevronRight, Crown, Flame, Gift, HeartHandshake, LogIn, Share2, Shuffl
 import { Locale, Player, Theme } from '../../types';
 import { Translation } from '../../i18n';
 import { CharacterToken } from '../CharacterToken';
-import { CoupleGameEmblem } from '../CoupleGameEmblem';
+import { CoupleGameEmblem, type CoupleGameMode } from '../CoupleGameEmblem';
 import { RemoteRoomRole, RemoteSyncStatus } from '../../utils/remoteRoom';
 
 const miniGamePreviews = [
-  { mode: 'after-hours', title: { en: 'The Slow Burn', zh: '慢慢升温', es: 'A fuego lento' } },
-  { mode: 'heart-dice', title: { en: 'Chemistry Dice', zh: '情趣骰子', es: 'Dados con chispa' } },
-  { mode: 'sketch-date', title: { en: 'Sketch Our Date', zh: '画出约会', es: 'Dibuja nuestra cita' } },
-  { mode: 'date-mystery', title: { en: 'Date Night Mystery', zh: '约会谜案', es: 'Misterio en pareja' } }
+  { mode: 'after-hours', title: { en: 'The Slow Burn', zh: '慢慢升温', es: 'A fuego lento' }, hint: { en: 'Find your spark', zh: '找到共同心动', es: 'Encuentren su chispa' } },
+  { mode: 'heart-dice', title: { en: 'Chemistry Dice', zh: '情趣骰子', es: 'Dados con chispa' }, hint: { en: 'Shake & tease', zh: '摇出暧昧动作', es: 'Agiten y coqueteen' } },
+  { mode: 'sketch-date', title: { en: 'Sketch Our Date', zh: '画出约会', es: 'Dibuja nuestra cita' }, hint: { en: 'Draw a date', zh: '画出下一次约会', es: 'Dibujen una cita' } },
+  { mode: 'date-mystery', title: { en: 'Date Night Mystery', zh: '约会谜案', es: 'Misterio en pareja' }, hint: { en: 'Solve it together', zh: '一起交换线索', es: 'Resuelvan juntos' } }
 ] as const;
 
 interface HomeViewProps {
@@ -26,7 +26,7 @@ interface HomeViewProps {
   showMiniGames: boolean;
   onSelectTheme: (playerId: number) => void;
   onOpenPremium: () => void;
-  onOpenMiniGames: () => void;
+  onOpenMiniGames: (mode?: CoupleGameMode) => void;
   onOpenInvite: () => void;
   onOpenJoinInvite: () => void;
   onOpenRewards: () => void;
@@ -52,9 +52,9 @@ export function HomeView({
   onOpenRewards
 }: HomeViewProps) {
   const miniGameCopy = {
-    en: { title: 'Date Night Games', hint: 'Four flirty ways to play together', detail: 'One phone · Couples preview' },
-    zh: { title: '情侣小游戏', hint: '四种让两人调情、亲近的玩法', detail: '同机轮流 · 试玩版' },
-    es: { title: 'Juegos para dos', hint: 'Cuatro juegos para coquetear y conectar', detail: 'Un teléfono · Vista previa' }
+    en: { title: 'Date Night Games', hint: 'Four ways to play, just for two', all: 'See all', detail: 'One phone · Take turns together' },
+    zh: { title: '情侣小游戏', hint: '四种玩法，今晚只属于你们', all: '查看全部', detail: '一部手机 · 两人轮流玩' },
+    es: { title: 'Juegos para dos', hint: 'Cuatro formas de jugar en pareja', all: 'Ver todos', detail: 'Un teléfono · Túrnense para jugar' }
   }[locale];
   const selectedCount = players.filter(player => player.themeId).length;
   const totalTasks = players.reduce((count, player) => {
@@ -63,7 +63,7 @@ export function HomeView({
   }, 0);
 
   return (
-    <div className="home-view flex min-h-0 flex-1 flex-col overflow-hidden no-scrollbar">
+    <div className="home-view flex min-h-0 flex-1 flex-col no-scrollbar">
       <section className="home-hero">
         <div className="max-w-[330px]">
           <p className="home-tagline text-sm font-semibold text-rose-100/80">{copy.tagline}</p>
@@ -74,6 +74,29 @@ export function HomeView({
           </h2>
         </div>
       </section>
+
+      {showMiniGames && (
+        <section className="home-games" aria-labelledby="home-games-title">
+          <div className="home-games-heading">
+            <div className="min-w-0">
+              <h3 id="home-games-title">{miniGameCopy.title}</h3>
+              <p>{miniGameCopy.hint}</p>
+            </div>
+            <button type="button" className="home-games-all cfc-pressable" onClick={() => onOpenMiniGames()}>
+              {miniGameCopy.all} <ChevronRight size={16} />
+            </button>
+          </div>
+          <div className="home-games-grid">
+            {miniGamePreviews.map(game => (
+              <button key={game.mode} type="button" className="home-game-tile cfc-pressable" onClick={() => onOpenMiniGames(game.mode)} aria-label={`${game.title[locale]} · ${game.hint[locale]}`}>
+                <CoupleGameEmblem mode={game.mode} className="home-game-emblem" />
+                <span className="home-game-copy"><strong>{game.title[locale]}</strong><small>{game.hint[locale]}</small></span>
+              </button>
+            ))}
+          </div>
+          <p className="home-games-footnote">{miniGameCopy.detail}</p>
+        </section>
+      )}
 
       <div className="home-stats grid grid-cols-3 gap-2">
         <div className="home-stat-card cfc-surface rounded-[18px] px-3 py-3">
@@ -115,32 +138,6 @@ export function HomeView({
             }`}
           />
         </div>
-      )}
-
-      {showMiniGames && (
-        <button
-          type="button"
-          className="home-wide-action home-mini-games-after-dark cfc-pressable cfc-surface-strong flex w-full items-center gap-3 rounded-[20px] p-3 text-left"
-          onClick={onOpenMiniGames}
-        >
-          <span className="home-action-icon cfc-icon-tile flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--cfc-rose-soft)] text-[#321018]">
-            <HeartHandshake size={21} />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="home-action-title block font-black text-white">{miniGameCopy.title}</span>
-            <span className="home-action-hint mt-0.5 block text-[11px] leading-relaxed text-[var(--cfc-text-muted)]">{miniGameCopy.hint}</span>
-            <span className="mt-2 grid grid-cols-2 gap-1.5">
-              {miniGamePreviews.map(game => (
-                <span key={game.mode} className="flex min-w-0 items-center gap-1.5 rounded-[10px] border border-[var(--cfc-border)] bg-white/[.055] px-1.5 py-1 text-[10px] font-bold leading-tight text-[var(--cfc-rose-soft)]">
-                  <CoupleGameEmblem mode={game.mode} className="h-6 w-6 shrink-0" />
-                  <span>{game.title[locale]}</span>
-                </span>
-              ))}
-            </span>
-            <span className="mt-1 block text-[10px] font-semibold text-[var(--cfc-amber)]">{miniGameCopy.detail}</span>
-          </span>
-          <ChevronRight size={19} className="shrink-0 text-white/42" />
-        </button>
       )}
 
       <button

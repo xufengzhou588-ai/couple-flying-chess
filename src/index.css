@@ -442,13 +442,18 @@ select:focus-visible,
 
 .home-view {
   gap: clamp(8px, 1.25dvh, 14px);
-  justify-content: space-between;
+  justify-content: flex-start;
   min-width: 0;
   max-width: 100%;
   overflow-x: hidden;
   overflow-y: auto;
-  padding-bottom: max(8px, env(safe-area-inset-bottom));
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  padding-bottom: max(20px, env(safe-area-inset-bottom));
 }
+
+.home-view > * { flex-shrink: 0; }
 
 .home-hero {
   margin-top: clamp(0px, 0.3dvh, 4px);
@@ -1793,32 +1798,30 @@ select:focus-visible,
   transform: scale(1);
 }
 
-/* The mini-game doorway carries the Midnight Flirt look into Flight Chess. */
-.home-mini-games-after-dark {
-  border: 1px solid #5c284f;
-  border-left: 3px solid #ff3b94;
-  border-radius: 10px;
-  background: linear-gradient(105deg, #271126, #170e1d);
-  box-shadow: 0 0 22px #ff3b941c;
+/* A compact game shelf keeps each couple game recognizable on the board home. */
+.home-games {
+  padding: 13px;
+  border: 1px solid #724064;
+  border-radius: var(--cfc-radius-lg);
+  background: linear-gradient(145deg, #30162f, #1b1023 76%);
+  box-shadow: 0 14px 36px #ff3b9414;
 }
-.home-mini-games-after-dark .home-action-icon {
-  border: 1px solid #ff3b94;
-  border-radius: 7px;
-  background: #300b2b;
-  color: #ff53a5;
-  box-shadow: 0 0 13px #ff3b9452;
+.home-games-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.home-games-heading h3 { margin: 0; color: #fff0f7; font-size: 18px; line-height: 1.15; font-weight: 800; }
+.home-games-heading p { margin: 3px 0 0; color: #d7b0c9; font-size: 11px; line-height: 1.3; }
+.home-games-all { display: flex; flex: none; align-items: center; gap: 1px; min-height: 44px; padding: 0 6px; color: var(--cfc-rose-soft); font-size: 11px; font-weight: 800; }
+.home-games-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.home-game-tile { display: flex; align-items: center; gap: 9px; min-width: 0; min-height: 76px; padding: 9px; border: 1px solid #754066; border-radius: 14px; background: #361633; color: #fff0f7; text-align: left; }
+.home-game-tile:focus-visible, .home-games-all:focus-visible { outline: 3px solid var(--cfc-focus); outline-offset: 2px; }
+.home-game-emblem { width: 40px; height: 40px; flex: none; filter: drop-shadow(0 3px 7px #0007); }
+.home-game-copy { display: block; min-width: 0; }
+.home-game-copy strong { display: block; font-size: 12px; line-height: 1.18; overflow-wrap: anywhere; }
+.home-game-copy small { display: block; margin-top: 3px; color: #d7b0c9; font-size: 10px; line-height: 1.18; overflow-wrap: anywhere; }
+.home-games-footnote { margin: 10px 0 0; color: var(--cfc-amber); font-size: 10px; font-weight: 700; }
+@media (max-width: 340px) {
+  .home-games { padding: 10px; }
+  .home-game-tile { gap: 6px; padding: 7px; }
+  .home-game-emblem { width: 34px; height: 34px; }
+  .home-game-copy strong { font-size: 11px; }
+  .home-game-copy small { font-size: 9px; }
 }
-.home-mini-games-after-dark .home-action-title { color: #fff0f7; }
-.home-mini-games-after-dark .home-action-hint { color: #c9a9c1; }
-.home-mini-games-after-dark .home-action-title + .home-action-hint + span > span {
-  border-color: #5c284f;
-  border-radius: 6px;
-  background: #2a102d;
-  color: #ffb5dc;
-}
-.home-mini-games-after-dark .home-action-title + .home-action-hint + span svg {
-  filter: drop-shadow(0 0 4px #ff3b9470);
-}
-.home-mini-games-after-dark .home-action-title + .home-action-hint + span + span { color: #d8b5ff; }
-.home-mini-games-after-dark > svg { color: #ff53a5; }
-.home-mini-games-after-dark:focus-visible { outline-color: #ffb5dc; }

@@ -193,7 +193,10 @@ export default function App() {
     window.history.replaceState(null, '', url);
   }
   useEffect(() => { document.documentElement.lang = locale === 'zh' ? 'zh-CN' : locale === 'es' ? 'es-US' : 'en-US'; }, [locale]);
-  const [mode, setMode] = useState<Mode | null>(null);
+  const [mode, setMode] = useState<Mode | null>(() => {
+    const requested = new URLSearchParams(window.location.search).get('game');
+    return gameCatalog.find(game => game.mode === requested)?.mode ?? null;
+  });
   const [ready, setReady] = useState(false);
   const [names, setNames] = useState<Names>(['Player 1', 'Player 2']);
   const [vibe, setVibe] = useState<Vibe>('playful');
@@ -204,7 +207,12 @@ export default function App() {
   const exitRef = useRef<HTMLDialogElement>(null);
   const seenMissions = useRef(new Set<string>());
   const seenIdeas = useRef(new Set<string>());
-  function home() { stopCharacterVoice(); setMode(null); setReady(false); setShowExit(false); }
+  function home() {
+    stopCharacterVoice(); setMode(null); setReady(false); setShowExit(false);
+    const url = new URL(window.location.href);
+    url.searchParams.delete('game');
+    window.history.replaceState(null, '', url);
+  }
   const activeCatalogGame = gameCatalog.find(game => game.mode === mode);
   function leave() { if (ready) setShowExit(true); else home(); }
   function replay(swap = false) { if (swap) setNames(prev => [prev[1], prev[0]]); setSession(prev => prev + 1); }

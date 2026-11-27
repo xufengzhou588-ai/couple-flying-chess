@@ -430,12 +430,14 @@ function App() {
               showMiniGames={showMiniGamePreview}
               onSelectTheme={handleSelectTheme}
               onOpenPremium={() => setIsPremiumPreviewOpen(true)}
-              onOpenMiniGames={() => {
+              onOpenMiniGames={(mode) => {
                 const base = import.meta.env.DEV
                   ? `${window.location.protocol}//${window.location.hostname}:5180/`
                   : '/games/index.html';
-                const url = `${base}?lang=${state.locale}`;
-                window.location.assign(url);
+                const url = new URL(base, window.location.href);
+                url.searchParams.set('lang', state.locale);
+                if (mode) url.searchParams.set('game', mode);
+                window.location.assign(url.toString());
               }}
               onOpenInvite={() => {
                 setInviteMode('invite');
