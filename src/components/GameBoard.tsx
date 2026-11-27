@@ -39,30 +39,8 @@ function getTokenPoint(player: Player, players: Player[]) {
   };
 }
 
-function TileGlyph({ type, outlined = false }: { type: TileType; outlined?: boolean }) {
-  if (type === 'lucky') {
-    const path = 'M 0 1.45 C -0.4 1.08 -1.7 0.28 -1.7 -0.72 C -1.7 -1.72 -0.48 -1.95 0 -1.05 C 0.48 -1.95 1.7 -1.72 1.7 -0.72 C 1.7 0.28 0.4 1.08 0 1.45 Z';
-    return outlined ? (
-      <path d={path} fill="none" stroke="currentColor" strokeWidth="0.46" strokeLinecap="round" strokeLinejoin="round" />
-    ) : (
-      <path d={path} fill="currentColor" />
-    );
-  }
-
-  if (type === 'trap') {
-    const path = 'M 0 -1.75 C 1.18 -0.68 1.55 0.38 1.02 1.22 C 0.48 2.04 -0.52 2.04 -1.05 1.2 C -1.58 0.38 -1.2 -0.55 -0.32 -1.28 C -0.42 -0.45 0.02 -0.02 0.35 0.42 C 0.7 -0.38 0.48 -1.02 0 -1.75 Z';
-    return outlined ? (
-      <path d={path} fill="none" stroke="currentColor" strokeWidth="0.46" strokeLinecap="round" strokeLinejoin="round" />
-    ) : (
-      <path d={path} fill="currentColor" />
-    );
-  }
-
-  return <circle r="0.52" fill="currentColor" />;
-}
-
-function BoardTileMarker({ type }: { type: TileType }) {
-  const accent = type === 'lucky' ? '#f08aa8' : type === 'trap' ? '#e7b45a' : '#d8bc83';
+function BoardTileMarker({ type, step }: { type: TileType; step: number }) {
+  const accent = type === 'lucky' ? '#ff88b0' : type === 'trap' ? '#f8d38a' : '#d8bc83';
 
   if (type === 'blank') {
     return (
@@ -75,11 +53,9 @@ function BoardTileMarker({ type }: { type: TileType }) {
 
   return (
     <g color={accent}>
-      <circle r="1.92" fill="rgba(22,10,17,0.94)" stroke="currentColor" strokeWidth="0.46" />
-      <circle r="1.53" fill="none" stroke="currentColor" strokeOpacity="0.28" strokeWidth="0.22" />
-      <g transform="scale(0.78)">
-        <TileGlyph type={type} outlined />
-      </g>
+      <circle r="2.6" fill="rgba(14,5,12,0.96)" stroke="currentColor" strokeWidth="0.35" />
+      <circle r="2.18" fill={accent} />
+      <text textAnchor="middle" dominantBaseline="central" fill="#2c1422" fontSize={step > 9 ? 2.8 : 3} fontWeight="900" fontFamily="-apple-system, BlinkMacSystemFont, sans-serif">{step}</text>
     </g>
   );
 }
@@ -203,7 +179,7 @@ export function GameBoard({
                     )}
                   </>
                 ) : (
-                  <BoardTileMarker type={type} />
+                  <BoardTileMarker type={type} step={step} />
                 )}
               </g>
             );
@@ -234,7 +210,7 @@ export function GameBoard({
               key={player.id}
               className={`board-player-token absolute z-30 flex items-center justify-center transition-all duration-500 ease-out ${
                 isActive ? 'avatar-pulse' : ''
-              } ${playerReaction?.result === 4 ? 'character-celebrate' : ''} ${
+              } ${playerReaction && playerReaction.result >= 4 ? 'character-celebrate' : ''} ${
                 playerReaction?.result === 1 ? 'character-grumble' : ''
               }`}
               style={{
@@ -245,7 +221,7 @@ export function GameBoard({
                 height: '8.4%'
               }}
             >
-              <CharacterToken player={player} active={isActive} mood={mood} size="board" />
+              <CharacterToken player={{ ...player, color: player.id === 0 ? '#f8d38a' : '#ff88b0' }} active={isActive} mood={mood} size="board" />
             </div>
           );
         })}

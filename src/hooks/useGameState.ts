@@ -9,7 +9,7 @@ import {
   Theme
 } from '../types';
 import { loadFromStorage, saveToStorage } from '../utils/localStorage';
-import { calculateNewPosition, generateBoardMap, generateSpiralPath } from '../utils/gameLogic';
+import { boardTileOwner, calculateNewPosition, generateBoardMap, generateSpiralPath } from '../utils/gameLogic';
 import { DEFAULT_THEMES, getDefaultThemes } from '../data/defaultThemes';
 import { t } from '../i18n';
 import { getDefaultFinalRewardIds } from '../data/gameExperience';
@@ -428,7 +428,13 @@ export function useGameState() {
   }, []);
 
   const setActiveTask = useCallback((task: TaskEventData | null) => {
-    setState(prev => ({ ...prev, activeTask: task }));
+    setState(prev => ({
+      ...prev,
+      players: task?.type === 'collision'
+        ? prev.players.map(player => player.id === task.executorPlayerId ? { ...player, step: 0 } : player)
+        : prev.players,
+      activeTask: task
+    }));
   }, []);
 
   const setWinner = useCallback((winnerId: number | null) => {
@@ -486,39 +492,23 @@ export function useGameState() {
         };
       }
 
-      const tileType = state.boardMap[landingStep];
-
-      if (tileType === 'lucky') {
-        const theme = state.themes.find(item => item.id === activePlayer.themeId);
-
+      const ownerId = boardTileOwner(state.boardMap[landingStep]);
+      if (ownerId !== null) {
+        const isOwnColor = ownerId === activePlayer.id;
+        const executor = isOwnColor ? opponent : activePlayer;
+        const owner = isOwnColor ? activePlayer : opponent;
+        const theme = state.themes.find(item => item.id === owner.themeId);
         return {
-          type: 'lucky',
+          type: isOwnColor ? 'lucky' : 'trap',
           locale: state.locale,
           initiatorPlayerId: activePlayer.id,
-          executorPlayerId: opponent.id,
-          title: copy.eventTitles.lucky,
+          executorPlayerId: executor.id,
+          title: isOwnColor ? copy.eventTitles.lucky : copy.eventTitles.trap,
           subtitle: `${copy.taskFrom} ${copy.themeQuoteOpen}${theme?.name || copy.mysteryTheme}${copy.themeQuoteClose}`,
-          icon: 'favorite',
-          color: 'text-rose-300',
+          icon: isOwnColor ? 'favorite' : 'lock',
+          color: isOwnColor ? 'text-rose-300' : 'text-amber-300',
           task: randomTask(theme, state.locale, landingStep),
-          taskSourceId: activePlayer.themeId || ''
-        };
-      }
-
-      if (tileType === 'trap') {
-        const theme = state.themes.find(item => item.id === opponent.themeId);
-
-        return {
-          type: 'trap',
-          locale: state.locale,
-          initiatorPlayerId: activePlayer.id,
-          executorPlayerId: activePlayer.id,
-          title: copy.eventTitles.trap,
-          subtitle: `${copy.taskFrom} ${copy.themeQuoteOpen}${theme?.name || copy.mysteryTheme}${copy.themeQuoteClose}`,
-          icon: 'lock',
-          color: 'text-fuchsia-300',
-          task: randomTask(theme, state.locale, landingStep),
-          taskSourceId: opponent.themeId || ''
+          taskSourceId: owner.themeId || ''
         };
       }
 
@@ -531,11 +521,10 @@ export function useGameState() {
     setState(prev => {
       let nextPlayers = prev.players;
 
-      if (outcome === 'reject') {
+      if (outcome === 'reject' && task.type !== 'collision') {
         const backSteps = Math.floor(Math.random() * 3) + 1;
         nextPlayers = prev.players.map(player => {
           if (player.id !== task.executorPlayerId) return player;
-          if (task.type === 'collision') return { ...player, step: 0 };
           return { ...player, step: Math.max(0, player.step - backSteps) };
         });
       }

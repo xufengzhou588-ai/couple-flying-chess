@@ -134,7 +134,7 @@ export function GameView({
     navigator.vibrate?.(24);
 
     setTimeout(() => {
-      if (result === 4) {
+      if (result >= 4) {
         highRollStreaksRef.current[currentTurn] += 1;
       } else {
         highRollStreaksRef.current[currentTurn] = 0;
@@ -265,7 +265,7 @@ export function GameView({
             <div className="flex items-center justify-between gap-2">
               <div
                 className={`game-turn-pill flex items-center justify-center gap-1.5 rounded-xl px-2 py-1.5 text-xs font-black ${
-                  currentTurn === 0 ? 'bg-sky-300 text-[#07111d]' : 'text-sky-100/52'
+                  currentTurn === 0 ? 'bg-[#f8d38a] text-[#271708]' : 'text-amber-100/52'
                 }`}
               >
                 <User size={14} className="shrink-0" />
@@ -330,7 +330,13 @@ export function GameView({
         </div>
 
         <div className="game-control-panel cfc-surface-strong mx-4 mb-3 shrink-0 rounded-[24px] p-3">
-          <div className="mb-2 rounded-2xl border border-[var(--cfc-border)] bg-[rgba(255,255,255,0.055)] px-3 py-2">
+          <div className="board-color-key mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] font-bold text-white/80">
+            <span className="inline-flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-full bg-[#ff88b0]" />{copy.pinkTile}</span>
+            <span className="inline-flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-full bg-[var(--cfc-amber)]" />{copy.goldTile}</span>
+            <span className="text-[var(--cfc-text-muted)]">{copy.captureRule}</span>
+          </div>
+          <p className="board-color-rule mb-2 text-[10px] leading-snug text-[var(--cfc-text-muted)]">{copy.boardColorRule}</p>
+          <div className="game-heat-strip mb-2 rounded-2xl border border-[var(--cfc-border)] bg-[rgba(255,255,255,0.055)] px-3 py-2">
             <div className="mb-1.5 flex items-center justify-between">
               <div>
                 <div className="text-[10px] font-semibold text-[var(--cfc-text-subtle)]">{copy.heatStage}</div>
@@ -352,7 +358,7 @@ export function GameView({
             <div className="min-w-0 flex-1">
               <div
                 className={`text-sm font-black ${
-                  currentTurn === 0 ? 'text-sky-200' : 'text-rose-200'
+                  currentTurn === 0 ? 'text-[#f8d38a]' : 'text-rose-200'
                 }`}
               >
                 {currentTurn === 0 ? copy.maleTurn : copy.femaleTurn}

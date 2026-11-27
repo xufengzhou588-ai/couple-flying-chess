@@ -59,7 +59,7 @@ try {
     }
   }
   assert.equal(await page.getByRole('button', { name: /^Play / }).count(), 4);
-  assert.equal(await page.getByRole('link', { name: 'Play Flight Chess' }).count(), 1);
+  assert.equal(await page.getByRole('link', { name: 'Play Flight Chess' }).count(), 0, 'The games catalog has no duplicate board tile that only opens its home');
   await page.getByRole('link', { name: 'Back to Flight Chess' }).click();
   await page.waitForURL(baseUrl);
   console.log('Board ↔ games navigation passed');

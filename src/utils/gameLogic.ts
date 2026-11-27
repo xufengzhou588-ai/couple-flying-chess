@@ -84,7 +84,19 @@ export function generateSpiralPath(): PathCoord[] {
 }
 
 export function generateBoardMap(): TileType[] {
-  return [...FIXED_BOARD_MAP];
+  // Every playable stop belongs to one partner. The original map supplies the
+  // rhythm; previously neutral stops alternate between her pink and his gold.
+  return FIXED_BOARD_MAP.map((tile, step) =>
+    step > 0 && step < 48 && tile === 'blank'
+      ? (step % 2 === 0 ? 'trap' : 'lucky')
+      : tile
+  );
+}
+
+// TileType retains its stored identifiers; on the board lucky is pink/her and
+// trap is gold/him. Whether a landing is lucky depends on who is rolling.
+export function boardTileOwner(tile: TileType): 0 | 1 | null {
+  return tile === 'lucky' ? 1 : tile === 'trap' ? 0 : null;
 }
 
 export function calculateNewPosition(current: number, steps: number): number {
@@ -98,7 +110,7 @@ export function calculateNewPosition(current: number, steps: number): number {
 }
 
 export function rollDice(): number {
-  // A slower 1-4 pace keeps a full date-length game without changing the board art.
-  const dateNightRolls = [1, 2, 2, 3, 3, 4];
-  return dateNightRolls[Math.floor(Math.random() * dateNightRolls.length)];
+  // The six visible die faces are equally likely, so numbered spaces can be
+  // used to plan a landing without the result being chosen by the player.
+  return Math.floor(Math.random() * 6) + 1;
 }

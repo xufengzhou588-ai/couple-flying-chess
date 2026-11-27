@@ -29,7 +29,7 @@ try {
   assert.equal(await page.locator('.catalog-card').count(), 4);
   assert.equal(await page.evaluate(() => document.querySelector('.catalog-card:last-child').getBoundingClientRect().bottom < innerHeight), true, 'All four game choices fit on a small iPhone screen');
   await page.evaluate(() => document.getElementById('root').scrollTo({ top: 9999 }));
-  assert.equal(await page.evaluate(() => document.getElementById('root').scrollTop > 0 && document.querySelector('.board-feature').getBoundingClientRect().bottom < innerHeight), true, 'The home screen scrolls to Flight Chess inside the app');
+  assert.equal(await page.evaluate(() => document.getElementById('root').scrollTop > 0 && document.querySelector('.home-footnote').getBoundingClientRect().bottom < innerHeight), true, 'The home screen scrolls to its closing note');
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(url);
   await page.getByRole('button', { name: 'Play The Slow Burn' }).click();

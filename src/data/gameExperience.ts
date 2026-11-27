@@ -232,10 +232,10 @@ function withDiceTaunt(reaction: DiceReactionData, locale: Locale, isMale: boole
 
 export function getDiceReaction(locale: Locale, playerId: number, result: number): DiceReactionData {
   const isMale = playerId === 0;
-  const mood = result === 4 ? 'heart' : result === 1 ? 'spicy' : 'tease';
+  const mood = result >= 4 ? 'heart' : result === 1 ? 'spicy' : 'tease';
 
   if (locale === 'zh') {
-    if (result === 4) {
+    if (result >= 4) {
       return withDiceTaunt({
         playerId,
         result,
@@ -263,7 +263,7 @@ export function getDiceReaction(locale: Locale, playerId: number, result: number
   }
 
   if (locale === 'es') {
-    if (result === 4) {
+    if (result >= 4) {
       return withDiceTaunt({
         playerId,
         result,
@@ -290,7 +290,7 @@ export function getDiceReaction(locale: Locale, playerId: number, result: number
     }, locale, isMale);
   }
 
-  if (result === 4) {
+  if (result >= 4) {
     return withDiceTaunt({
       playerId,
       result,

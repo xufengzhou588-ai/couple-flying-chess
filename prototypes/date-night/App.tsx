@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowLeft, ArrowRight, ArrowUpRight, Check, Clock, Eye, Heart, Lock, MessageCircle, Moon, Pause, Plane, Play, RefreshCw, Shuffle, Sparkles, Ticket, Users, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ArrowUpRight, Check, Clock, Eye, Heart, Lock, MessageCircle, Moon, Pause, Play, RefreshCw, Shuffle, Sparkles, Ticket, Users, X } from 'lucide-react';
 import { Button, Eyebrow, Progress, Handoff, Ending } from './shared';
 import { PromptIllustration } from './illustrations';
 import { CoupleGameEmblem } from '../../src/components/CoupleGameEmblem';
@@ -46,11 +46,6 @@ function Home({ onChoose }: { onChoose: (mode: Mode) => void }) {
       </button>)}</div>
     </section>
 
-    <a className="board-feature" href={flightBoardUrl} aria-label={`${tr('Play')} ${tr('Flight Chess')}`}>
-      <span className="board-feature-mark"><Plane size={23} /><Heart size={11} fill="currentColor" className="board-feature-heart" /></span>
-      <span className="board-feature-copy"><small>{tr('THE ORIGINAL COUPLE FLIGHT GAME')}</small><strong>{tr('Flight Chess')}</strong><span>{tr('Roll, flirt, and follow the board together. Play on one screen or invite your partner online.')}</span></span>
-      <span className="board-feature-action">{tr('Play the board')} <ArrowUpRight size={18} /></span>
-    </a>
     <div className="home-footnote"><span><Users size={16} /> {tr('These four games use one phone. Pass it between you.')}</span><span>{tr('No account. No audience. Just you.')}</span></div>
   </div>;
 }

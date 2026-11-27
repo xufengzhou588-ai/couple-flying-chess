@@ -231,7 +231,7 @@ export function AmbientSound({ copy, inGame = false, className = '' }: { copy: P
     <button
       type="button"
       className={`flex h-9 w-9 items-center justify-center rounded-2xl border transition active:scale-95 ${className} ${
-        inGame ? 'fixed left-4 bottom-[calc(env(safe-area-inset-bottom)+172px)] z-[80] shadow-2xl backdrop-blur-xl' : ''
+        inGame ? 'game-ambient-toggle fixed left-4 z-[80] shadow-2xl backdrop-blur-xl' : ''
       } ${
         enabled
           ? 'border-amber-100/40 bg-amber-100 text-[#2b1305] shadow-[0_0_22px_rgba(251,191,36,0.32)]'

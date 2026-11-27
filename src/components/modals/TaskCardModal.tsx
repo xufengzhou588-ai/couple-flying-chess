@@ -225,6 +225,7 @@ export function TaskCardModal({
               <h3 className="text-2xl font-black text-white">{taskData.title}</h3>
               <div className="mt-2 text-xs leading-relaxed text-[var(--cfc-text-muted)]">
                 <div>{taskData.subtitle}</div>
+                {taskData.type === 'collision' && <div className="mt-1 font-bold text-[var(--cfc-amber)]">{copy.captureNotice}</div>}
                 <div>
                   {copy.executeBy} <span className={executorClassName}>{executorLabel}</span> {copy.execute}
                 </div>
